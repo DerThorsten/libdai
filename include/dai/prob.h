@@ -334,7 +334,7 @@ template <typename T> class TProb {
         bool hasNaNs() const {
             bool foundnan = false;
             for( typename std::vector<T>::const_iterator x = _p.begin(); x != _p.end(); x++ )
-                if( isnan( *x ) ) {
+                if( std::isnan( *x ) ) {
                     foundnan = true;
                     break;
                 }

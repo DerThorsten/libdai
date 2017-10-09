@@ -1,0 +1,13 @@
+# LIBDAI cmake module
+# This module sets the following variables in your project::
+#
+#   LIBDAI_FOUND - true if LIBDAI found on the system
+#   LIBDAI_INCLUDE_DIRS - the directory containing LIBDAI headers
+#   LIBDAI_LIBRARY - the libdai library
+
+@PACKAGE_INIT@
+
+set(PN LIBDAI)
+set_and_check(${PN}_INCLUDE_DIRS "${PACKAGE_PREFIX_DIR}/@CMAKE_INSTALL_INCLUDEDIR@")
+set_and_check(${PN}_LIBRARY      "${PACKAGE_PREFIX_DIR}/@CMAKE_INSTALL_LIBDIR@"/libdai)
+check_required_components(${PN})

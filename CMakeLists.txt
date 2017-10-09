@@ -41,7 +41,7 @@ file(GLOB ${PROJECT_NAME}_SRC_FILES
 )
 
 file(GLOB ${PROJECT_NAME}_HEADERS 
-  ${CMAKE_CURRENT_SOURCE_DIR}/include/*.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/include/dai/*.h
   #EXCLUDE matlab
 )
 

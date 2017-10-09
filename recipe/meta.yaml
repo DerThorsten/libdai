@@ -28,14 +28,14 @@ test:
     - if exist %LIBRARY_PREFIX%\include\dai\alldai.h (exit 0) else (exit 1)  # [win]
 
 about:
-  home: https://github.com/DerThorsten/libDAI
+  home: https://github.com/DerThorsten/libdai
   license: GPL
   license_family: GPL
   license_file: README
   summary: 'libDAI'
   description: 'libDAI'
-  documentation_url:  https://github.com/DerThorsten/libDAI
-  dev_url: https://github.com/DerThorsten/libDAI
+  documentation_url:  https://github.com/DerThorsten/libdai
+  dev_url: https://github.com/DerThorsten/libdai
 
 extra:
   recipe-maintainers:

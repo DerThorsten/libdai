@@ -12,7 +12,7 @@ ENDIF()
 
 set(${PROJECT_NAME}_VERSION_MAJOR 0)
 set(${PROJECT_NAME}_VERSION_MINOR 3)
-set(${PROJECT_NAME}_VERSION_PATCH 0)
+set(${PROJECT_NAME}_VERSION_PATCH 3)
 
 
 set(${PROJECT_NAME}_VERSION 
@@ -28,10 +28,36 @@ include_directories(${Boost_INCLUDE_DIRS})
 
 
 
+SET( LIBDAI_COMPILE_ALL_ALGS_FLAGS
+  "-DDAI_WITH_BP"
+  "-DDAI_WITH_BP"
+  "-DDAI_WITH_FBP"
+  "-DDAI_WITH_TRWBP"
+  "-DDAI_WITH_MF"
+  "-DDAI_WITH_HAK"
+  "-DDAI_WITH_LC"
+  "-DDAI_WITH_TREEEP"
+  "-DDAI_WITH_JTREE"
+  "-DDAI_WITH_MR"
+  "-DDAI_WITH_GIBBS"
+  "-DDAI_WITH_CBP"
+  "-DDAI_WITH_DECMAP"
+)
 
+add_definitions(${LIBDAI_COMPILE_ALL_ALGS_FLAGS})
 
-
-
+# add_definitions(-DDAI_WITH_BP)
+# add_definitions(-DDAI_WITH_FBP)
+# add_definitions(-DDAI_WITH_TRWBP)
+# add_definitions(-DDAI_WITH_MF)
+# add_definitions(-DDAI_WITH_HAK)
+# add_definitions(-DDAI_WITH_LC)
+# add_definitions(-DDAI_WITH_TREEEP)
+# add_definitions(-DDAI_WITH_JTREE)
+# add_definitions(-DDAI_WITH_MR)
+# add_definitions(-DDAI_WITH_GIBBS)
+# add_definitions(-DDAI_WITH_CBP)
+# add_definitions(-DDAI_WITH_DECMAP)
 
 
 

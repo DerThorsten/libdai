@@ -108,9 +108,7 @@ write_basic_package_version_file(${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}Conf
 
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}Config.cmake
               ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}ConfigVersion.cmake
+              cmake/FindGMP.cmake
         DESTINATION ${${PROJECT_NAME}_CMAKECONFIG_INSTALL_DIR})
 
 
-install(FILES cmake/FindGMP.cmake
-              ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}FindGMP.cmake
-        DESTINATION ${${PROJECT_NAME}_CMAKECONFIG_INSTALL_DIR})

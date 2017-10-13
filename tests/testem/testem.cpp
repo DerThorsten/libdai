@@ -1,11 +1,8 @@
 /*  This file is part of libDAI - http://www.libdai.org/
  *
- *  libDAI is licensed under the terms of the GNU General Public License version
- *  2, or (at your option) any later version. libDAI is distributed without any
- *  warranty. See the file COPYING for more details.
+ *  Copyright (c) 2006-2011, The libDAI authors. All rights reserved.
  *
- *  Copyright (C) 2009  Charles Vaske  [cvaske at soe dot ucsc dot edu]
- *  Copyright (C) 2009  University of California Santa Cruz
+ *  Use of this source code is governed by a BSD-style license that can be found in the LICENSE file.
  */
 
 
@@ -38,8 +35,8 @@ int main( int argc, char** argv ) {
     fg.ReadFromFile( argv[1] );
 
     PropertySet infprops;
-    infprops.Set( "verbose", (size_t)1 );
-    infprops.Set( "updates", string("HUGIN") );
+    infprops.set( "verbose", (size_t)0 );
+    infprops.set( "updates", string("HUGIN") );
     InfAlg* inf = newInfAlg( "JTREE", fg, infprops );
     inf->init();
 

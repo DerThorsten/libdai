@@ -1,11 +1,8 @@
 /*  This file is part of libDAI - http://www.libdai.org/
  *
- *  libDAI is licensed under the terms of the GNU General Public License version
- *  2, or (at your option) any later version. libDAI is distributed without any
- *  warranty. See the file COPYING for more details.
+ *  Copyright (c) 2006-2011, The libDAI authors. All rights reserved.
  *
- *  Copyright (C) 2006-2009  Joris Mooij  [joris dot mooij at libdai dot org]
- *  Copyright (C) 2006-2007  Radboud University Nijmegen, The Netherlands
+ *  Use of this source code is governed by a BSD-style license that can be found in the LICENSE file.
  */
 
 
@@ -43,12 +40,23 @@ class InfAlg {
 
         /// Returns a pointer to a new, cloned copy of \c *this (i.e., virtual copy constructor)
         virtual InfAlg* clone() const = 0;
+
+        /// Returns a pointer to a newly constructed inference algorithm
+        /** \param fg Factor graph on which to perform the inference algorithm;
+         *  \param opts Parameters passed to constructor of inference algorithm;
+         */
+        virtual InfAlg* construct( const FactorGraph &fg, const PropertySet &opts ) const = 0;
     //@}
 
     /// \name Queries
     //@{
+        /// Returns the name of the algorithm
+        virtual std::string name() const = 0;
+
         /// Identifies itself for logging purposes
-        virtual std::string identify() const = 0;
+        virtual std::string identify() const {
+            return name() + printProperties();
+        }
 
         /// Returns reference to underlying FactorGraph.
         virtual FactorGraph &fg() = 0;
@@ -79,11 +87,12 @@ class InfAlg {
         /// Returns the (approximate) marginal probability distribution of a variable.
         /** \note Before this method is called, run() should have been called.
          */
-        virtual Factor belief( const Var &v ) const = 0;
+        virtual Factor belief( const Var &v ) const { return belief( VarSet(v) ); }
 
         /// Returns the (approximate) marginal probability distribution of a set of variables.
         /** \note Before this method is called, run() should have been called.
-         *  \throw NOT_IMPLEMENTED if not implemented/supported
+         *  \throw NOT_IMPLEMENTED if not implemented/supported.
+         *  \throw BELIEF_NOT_AVAILABLE if the requested belief cannot be calculated with this algorithm.
          */
         virtual Factor belief( const VarSet &vs ) const = 0;
 
@@ -110,15 +119,26 @@ class InfAlg {
          */
         virtual Real logZ() const = 0;
 
+        /// Calculates the joint state of all variables that has maximum probability
+        /** \note Before this method is called, run() should have been called.
+         *  \throw NOT_IMPLEMENTED if not implemented/supported
+         */
+        virtual std::vector<std::size_t> findMaximum() const { DAI_THROW(NOT_IMPLEMENTED); }
+
         /// Returns maximum difference between single variable beliefs in the last iteration.
         /** \throw NOT_IMPLEMENTED if not implemented/supported
          */
-        virtual Real maxDiff() const = 0;
+        virtual Real maxDiff() const { DAI_THROW(NOT_IMPLEMENTED); };
 
         /// Returns number of iterations done (one iteration passes over the complete factorgraph).
         /** \throw NOT_IMPLEMENTED if not implemented/supported
          */
-        virtual size_t Iterations() const = 0;
+        virtual size_t Iterations() const { DAI_THROW(NOT_IMPLEMENTED); };
+
+        /// Sets maximum number of iterations (one iteration passes over the complete factorgraph).
+        /** \throw NOT_IMPLEMENTED if not implemented/supported
+         */
+        virtual void setMaxIter( size_t /*maxiter*/ ) { DAI_THROW(NOT_IMPLEMENTED); }
     //@}
 
     /// \name Changing the factor graph
@@ -242,6 +262,7 @@ typedef DAIAlg<RegionGraph> DAIAlgRG;
  */
 Factor calcMarginal( const InfAlg& obj, const VarSet& vs, bool reInit );
 
+
 /// Calculates beliefs for all pairs of variables in \a vs using inference algorithm \a obj.
 /** calcPairBeliefs() works by 
  *  - clamping single variables in \a vs and calculating the partition sum and the single variable beliefs for each clamped state, if \a accurate == \c false;
@@ -255,6 +276,12 @@ Factor calcMarginal( const InfAlg& obj, const VarSet& vs, bool reInit );
  *  \param accurate if \c true, uses a slower but more accurate approximation algorithm
  */
 std::vector<Factor> calcPairBeliefs( const InfAlg& obj, const VarSet& vs, bool reInit, bool accurate=false );
+
+
+/// Calculates the joint state of all variables that has maximum probability, according to the inference algorithm \a obj
+/** \note Before this method is called, obj.run() should have been called.
+ */
+std::vector<size_t> findMaximum( const InfAlg& obj );
 
 
 } // end of namespace dai

@@ -1,10 +1,8 @@
 /*  This file is part of libDAI - http://www.libdai.org/
  *
- *  libDAI is licensed under the terms of the GNU General Public License version
- *  2, or (at your option) any later version. libDAI is distributed without any
- *  warranty. See the file COPYING for more details.
+ *  Copyright (c) 2006-2011, The libDAI authors. All rights reserved.
  *
- *  Copyright (C) 2009  Frederik Eaton [frederik at ofb dot net]
+ *  Use of this source code is governed by a BSD-style license that can be found in the LICENSE file.
  */
 
 
@@ -27,9 +25,6 @@ namespace dai {
 
 using namespace std;
 using boost::shared_ptr;
-
-
-const char *CBP::Name = "CBP";
 
 
 /// Given a sorted vector of states \a xis and total state count \a n_states, return a vector of states not in \a xis
@@ -69,7 +64,7 @@ Real logSumExp( Real a, Real b ) {
 Real dist( const vector<Factor> &b1, const vector<Factor> &b2, size_t nv ) {
     Real d = 0.0;
     for( size_t k = 0; k < nv; k++ )
-        d += dist( b1[k], b2[k], Prob::DISTLINF );
+        d += dist( b1[k], b2[k], DISTLINF );
     return d;
 }
 
@@ -146,18 +141,19 @@ Real CBP::run() {
     if( props.verbose >= 1 )
         cerr << "CBP average levels = " << (_sum_level / _num_leaves) << ", leaves = " << _num_leaves << endl;
     setBeliefs( beliefs_out, lz_out );
+    delete bp;
     return 0.0;
 }
 
 
 InfAlg* CBP::getInfAlg() {
     PropertySet bpProps;
-    bpProps.Set("updates", props.updates);
-    bpProps.Set("tol", props.tol);
-    bpProps.Set("maxiter", props.maxiter);
-    bpProps.Set("verbose", props.verbose);
-    bpProps.Set("logdomain", false);
-    bpProps.Set("damping", (Real)0.0);
+    bpProps.set("updates", props.updates);
+    bpProps.set("tol", props.tol);
+    bpProps.set("maxiter", props.maxiter);
+    bpProps.set("verbose", props.verbose);
+    bpProps.set("logdomain", false);
+    bpProps.set("damping", (Real)0.0);
     BP *bp = new BP( *this, bpProps );
     bp->recordSentMessages = true;
     bp->init();
@@ -192,16 +188,16 @@ void CBP::runRecurse( InfAlg *bp, Real orig_logZ, vector<size_t> clamped_vars_li
         *_clamp_ofstream << choose_count << "\t" << clamped_vars_list.size() << "\t" << i << "\t" << xis[0] << endl;
 
     if( clampingVar )
-        foreach( size_t xi, xis )
+        bforeach( size_t xi, xis )
             DAI_ASSERT(/*0<=xi &&*/ xi < var(i).states() );
     else
-        foreach( size_t xI, xis )
-            DAI_ASSERT(/*0<=xI &&*/ xI < factor(i).states() );
+        bforeach( size_t xI, xis )
+            DAI_ASSERT(/*0<=xI &&*/ xI < factor(i).nrStates() );
     // - otherwise, clamp and recurse, saving margin estimates for each
     // clamp setting. afterwards, combine estimates.
 
     // compute complement of 'xis'
-    vector<size_t> cmp_xis = complement( xis, clampingVar ? var(i).states() : factor(i).states() );
+    vector<size_t> cmp_xis = complement( xis, clampingVar ? var(i).states() : factor(i).nrStates() );
 
     /// \idea dai::CBP::runRecurse() could be implemented more efficiently with a nesting version of backupFactors/restoreFactors
     // this improvement could also be done locally: backup the clamped factor in a local variable,
@@ -317,7 +313,7 @@ bool CBP::chooseNextClampVar( InfAlg *bp, vector<size_t> &clamped_vars_list, siz
             // only pick probable values for variable
             size_t xi;
             do {
-                xi = rnd( factor(i).states() );
+                xi = rnd( factor(i).nrStates() );
                 t++;
             } while( bp->beliefF(i).p()[xi] < tiny && t < t1 );
             DAI_ASSERT( t < t1 );
@@ -388,7 +384,7 @@ bool CBP::chooseNextClampVar( InfAlg *bp, vector<size_t> &clamped_vars_list, siz
                 Real cost = 0;
                 if( doL1 )
                     for( size_t j = 0; j < nrVars(); j++ )
-                        cost += dist( bp->beliefV(j), bp1->beliefV(j), Prob::DISTL1 );
+                        cost += dist( bp->beliefV(j), bp1->beliefV(j), DISTL1 );
                 else
                     cost = props.bbp_cfn.evaluate( *bp1, &state );
                 if( cost > max_cost || win_k == -1 ) {
@@ -435,7 +431,7 @@ bool CBP::chooseNextClampVar( InfAlg *bp, vector<size_t> &clamped_vars_list, siz
         if( clampingVar )
             DAI_ASSERT(/*0<=xi &&*/ xi < var(i).states() );
         else
-            DAI_ASSERT(/*0<=xi &&*/ xi < factor(i).states() );
+            DAI_ASSERT(/*0<=xi &&*/ xi < factor(i).nrStates() );
         DAI_IFVERB(2, "CHOOSE_BBP (num clamped = " << clamped_vars_list.size() << ") chose " << i << " state " << xi << endl);
     } else
         DAI_THROW(UNKNOWN_ENUM_VALUE);
@@ -451,7 +447,7 @@ void CBP::printDebugInfo() {
 }
 
 
-pair<size_t, size_t> BBPFindClampVar( const InfAlg &in_bp, bool clampingVar, const PropertySet &bbp_props, const BBPCostFunction &cfn, Real *maxVarOut ) {
+std::pair<size_t, size_t> BBPFindClampVar( const InfAlg &in_bp, bool clampingVar, const PropertySet &bbp_props, const BBPCostFunction &cfn, Real *maxVarOut ) {
     BBP bbp( &in_bp, bbp_props );
     bbp.initCostFnAdj( cfn, NULL );
     bbp.run();
@@ -503,7 +499,7 @@ pair<size_t, size_t> BBPFindClampVar( const InfAlg &in_bp, bool clampingVar, con
             }
         }
         DAI_ASSERT(/*0 <= argmax_var_state &&*/
-               argmax_var_state < in_bp.fg().factor(argmax_var).states() );
+               argmax_var_state < in_bp.fg().factor(argmax_var).nrStates() );
     }
     if( maxVarOut )
         *maxVarOut = max_var;
@@ -597,20 +593,20 @@ void CBP::Properties::set(const PropertySet &opts)
 }
 PropertySet CBP::Properties::get() const {
     PropertySet opts;
-    opts.Set("verbose", verbose);
-    opts.Set("tol", tol);
-    opts.Set("updates", updates);
-    opts.Set("maxiter", maxiter);
-    opts.Set("rec_tol", rec_tol);
-    opts.Set("max_levels", max_levels);
-    opts.Set("min_max_adj", min_max_adj);
-    opts.Set("choose", choose);
-    opts.Set("recursion", recursion);
-    opts.Set("clamp", clamp);
-    opts.Set("bbp_props", bbp_props);
-    opts.Set("bbp_cfn", bbp_cfn);
-    opts.Set("rand_seed", rand_seed);
-    opts.Set("clamp_outfile", clamp_outfile);
+    opts.set("verbose", verbose);
+    opts.set("tol", tol);
+    opts.set("updates", updates);
+    opts.set("maxiter", maxiter);
+    opts.set("rec_tol", rec_tol);
+    opts.set("max_levels", max_levels);
+    opts.set("min_max_adj", min_max_adj);
+    opts.set("choose", choose);
+    opts.set("recursion", recursion);
+    opts.set("clamp", clamp);
+    opts.set("bbp_props", bbp_props);
+    opts.set("bbp_cfn", bbp_cfn);
+    opts.set("rand_seed", rand_seed);
+    opts.set("clamp_outfile", clamp_outfile);
     return opts;
 }
 string CBP::Properties::toString() const {

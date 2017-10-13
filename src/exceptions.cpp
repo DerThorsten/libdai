@@ -1,11 +1,8 @@
 /*  This file is part of libDAI - http://www.libdai.org/
  *
- *  libDAI is licensed under the terms of the GNU General Public License version
- *  2, or (at your option) any later version. libDAI is distributed without any
- *  warranty. See the file COPYING for more details.
+ *  Copyright (c) 2006-2011, The libDAI authors. All rights reserved.
  *
- *  Copyright (C) 2006-2009  Joris Mooij  [joris dot mooij at libdai dot org]
- *  Copyright (C) 2006-2007  Radboud University Nijmegen, The Netherlands
+ *  Use of this source code is governed by a BSD-style license that can be found in the LICENSE file.
  */
 
 
@@ -20,6 +17,7 @@ namespace dai {
         "Assertion failed",
         "Impossible typecast",
         "Requested object not found",
+        "Requested belief not available",
         "Unknown ENUM value",
         "Unknown DAI algorithm",
         "Unrecognized parameter estimation method",
@@ -27,6 +25,7 @@ namespace dai {
         "Unknown Property",
         "Malformed Property",
         "Not all mandatory Properties specified",
+        "Invalid alias",
         "Cannot read file",
         "Cannot write file",
         "Invalid FactorGraph file",
@@ -36,7 +35,8 @@ namespace dai {
         "Multiple undo levels unsupported",
         "FactorGraph is not connected",
         "Internal error",
-        "Runtime error"
+        "Runtime error",
+        "Out of memory"
     };
 
 

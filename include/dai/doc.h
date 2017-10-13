@@ -1,32 +1,17 @@
 /*  This file is part of libDAI - http://www.libdai.org/
  *
- *  libDAI is licensed under the terms of the GNU General Public License version
- *  2, or (at your option) any later version. libDAI is distributed without any
- *  warranty. See the file COPYING for more details.
+ *  Copyright (c) 2006-2011, The libDAI authors. All rights reserved.
  *
- *  Copyright (C) 2008-2009  Joris Mooij  [joris dot mooij at libdai dot org]
+ *  Use of this source code is governed by a BSD-style license that can be found in the LICENSE file.
  */
 
 
 /** \file
  *  \brief Contains additional doxygen documentation
  *
- *  \todo Write a concept/notations page for the documentation,
- *  explaining the concepts of "state" (index into a 
- *  multi-dimensional array, e.g., one corresponding
- *  to the Cartesian product of statespaces of variables)
- *  and "linear index". This should make it easier to
- *  document index.h and varset.h
+ *  \idea Adapt (part of the) guidelines in http://www.boost.org/development/requirements.html#Design_and_Programming
  *
- *  \todo Document tests and utils
- *
- *  \todo Add FAQ
- *
- *  \todo Adapt (part of the) guidelines in http://www.boost.org/development/requirements.html#Design_and_Programming
- *
- *  \todo Use "gcc -MM" to generate dependencies for targets: http://make.paulandlesley.org/autodep.html
- *
- *  \todo Replace VarSets by SmallSet<size_t> where appropriate, in order to minimize the use of FactorGraph::findVar().
+ *  \idea Use "gcc -MM" to generate dependencies for targets: http://make.paulandlesley.org/autodep.html
  *
  *  \idea Disentangle structures. In particular, ensure that graphical properties are not
  *  entangled with probabilistic properties. For example, a FactorGraph contains several components:
@@ -41,29 +26,20 @@
  *  \idea Use boost::uBLAS framework to deal with matrices, especially, with 2D sparse matrices.
  *  See http://www.boost.org/libs/numeric/ublas/doc/matrix_sparse.htm
  *  However: I read somewhere that boost::uBLAS concentrates more on correct implementation than on performance.
- *
- *  \idea Introduce naming scheme:
- *  - all Vars should be named v_..., e.g. v_i instead of i
- *  - all VarSets should be named vs_..., e.g. v_i instead of i
- *  - all Factors should be named f_..., e.g. f_I instead of I
- *  - all indices should be named _..., e.g. _k instead of k
- *  - all iterators should be named i_, e.g. i_i is an iterator to i
- *  - all const_iterators should be named ci_, e.g. ci_i is an iterator to i
  **/
 
 
 /** \mainpage Reference manual for libDAI - A free/open source C++ library for Discrete Approximate Inference methods
- *  \author Joris Mooij
+ *  \author Joris Mooij (with contributions of Frederik Eaton)
  *  \version git HEAD
- *  \date November 16, 2009 - or later
+ *  \date July 12, 2011 - or later
  *
  *  <hr size="1">
  *  \section about About libDAI
- *  libDAI is a free/open source C++ library (licensed under GPL 2+) that provides
- *  implementations of various (approximate) inference methods for discrete
- *  graphical models. libDAI supports arbitrary factor graphs with discrete
- *  variables; this includes discrete Markov Random Fields and Bayesian
- *  Networks.
+ *  libDAI is a free/open source C++ library that provides implementations of
+ *  various (approximate) inference methods for discrete graphical models. libDAI
+ *  supports arbitrary factor graphs with discrete variables; this includes
+ *  discrete Markov Random Fields and Bayesian Networks.
  *
  *  The library is targeted at researchers. To be able to use the library, a
  *  good understanding of graphical models is needed.
@@ -79,6 +55,10 @@
  *  and to easily compare the accuracy and performance with existing algorithms
  *  that have been implemented already.
  *
+ *  A solver using libDAI was amongst the three winners of the UAI 2010 Approximate
+ *  Inference Challenge (see http://www.cs.huji.ac.il/project/UAI10/ for more 
+ *  information). The full source code is provided as part of the library.
+ *
  *  \section features Features
  *  Currently, libDAI supports the following (approximate) inference methods:
  *  - Exact inference by brute force enumeration;
@@ -86,13 +66,15 @@
  *  - Mean Field;
  *  - Loopy Belief Propagation [\ref KFL01];
  *  - Fractional Belief Propagation [\ref WiH03];
+ *  - Tree-Reweighted Belief Propagation [\ref WJW03];
  *  - Tree Expectation Propagation [\ref MiQ04];
  *  - Generalized Belief Propagation [\ref YFW05];
  *  - Double-loop GBP [\ref HAK03];
  *  - Various variants of Loop Corrected Belief Propagation
  *    [\ref MoK07, \ref MoR05];
  *  - Gibbs sampler;
- *  - Clamped Belief Propagation [\ref EaG09].
+ *  - Conditioned Belief Propagation [\ref EaG09];
+ *  - Decimation algorithm.
  *
  *  These inference methods can be used to calculate partition sums, marginals
  *  over subsets of variables, and MAP states (the joint state of variables that
@@ -135,7 +117,7 @@
  *  \section compatibility Compatibility
  *  
  *  The code has been developed under Debian GNU/Linux with the GCC compiler suite.
- *  libDAI compiles successfully with g++ versions 3.4, 4.1, 4.2 and 4.3.
+ *  libDAI compiles successfully with g++ versions 3.4 up to 4.6.
  *
  *  libDAI has also been successfully compiled with MS Visual Studio 2008 under Windows
  *  (but not all build targets are supported yet) and with Cygwin under Windows.
@@ -156,20 +138,17 @@
  *  <hr size="1">
  *  \section license-license License
  *
- *  libDAI is free software; you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation; either version 2 of the License, or
- *  (at your option) any later version.
+ *  libDAI is free software; you can redistribute it and/or modify it under the
+ *  terms of the BSD 2-clause license (also known as the FreeBSD license), which
+ *  can be found in the accompanying LICENSE file.
  *
- *  libDAI is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
+ *  [Note: up to and including version 0.2.7, libDAI was licensed under the GNU 
+ *  General Public License (GPL) version 2 or higher.]
  *
  *  <hr size="1">
- *  \section license-gpl GNU General Public License version 2
+ *  \section license-freebsd libDAI license (similar to FreeBSD license)
  * 
- *  \verbinclude COPYING
+ *  \verbinclude LICENSE
  */
 
 
@@ -178,18 +157,28 @@
  *  \section citations-citations Citing libDAI
  *
  *  If you write a scientific paper describing research that made substantive use
- *  of this program, please:
- *    - mention the fashion in which this software was
- *      used, including the version number, with a citation to the literature, 
- *      to allow replication; 
- *    - mention this software in the Acknowledgements section. 
+ *  of this library, please cite the following paper describing libDAI:\n
  *
- *  An appropriate citation would be:\n
- *  J. M. Mooij (2009) "libDAI 0.2.3: A free/open source C++ library for Discrete 
- *  Approximate Inference", http://www.libdai.org
+ *  Joris M. Mooij;\n
+ *  libDAI: A free & open source C++ library for Discrete Approximate Inference in graphical models;\n
+ *  Journal of Machine Learning Research, 11(Aug):2169-2173, 2010.\n
  *
- *  Moreover, as a personal note, I would appreciate it if you would email
- *  (citations of) papers referencing this work to joris dot mooij at libdai dot org.
+ *  In BiBTeX format (for your convenience):\n
+ *  
+ *  <pre>
+ *  \@article{Mooij_libDAI_10,
+ *    author    = {Joris M. Mooij},
+ *    title     = {lib{DAI}: A Free and Open Source {C++} Library for Discrete Approximate Inference in Graphical Models},
+ *    journal   = {Journal of Machine Learning Research},
+ *    year      = 2010,
+ *    month     = Aug,
+ *    volume    = 11,
+ *    pages     = {2169-2173},
+ *    url       = "http://www.jmlr.org/papers/volume11/mooij10a/mooij10a.pdf"
+ *  }</pre>
+ *
+ *  Moreover, as a personal note, I would appreciate it to be informed about any
+ *  publications using libDAI at joris dot mooij at libdai dot org.
  */
 
 
@@ -204,66 +193,116 @@
  *  <hr size="1">
  *  \section build-unix Building libDAI under UNIX variants (Linux / Cygwin / Mac OS X)
  *
+ *  \subsection build-unix-preparations Preparations
+ *
  *  You need:
  *    - a recent version of gcc (at least version 3.4)
  *    - GNU make
- *    - doxygen
- *    - graphviz
- *    - recent boost C++ libraries (at least version 1.34, or 1.37 for cygwin;
+ *    - recent boost C++ libraries (at least version 1.37; however,
  *      version 1.37 shipped with Ubuntu 9.04 is known not to work)
+ *    - GMP library (or the Windows port called MPIR)
+ *    - doxygen (only for building the documentation)
+ *    - graphviz (only for using some of the libDAI command line utilities)
+ *    - CImg library (only for building the image segmentation example)
  * 
- *  On Debian/Ubuntu, you can easily install all these packages with a single command:
- *  <pre>  apt-get install g++ make doxygen graphviz libboost-dev libboost-graph-dev libboost-program-options-dev</pre>
+ *  On Debian/Ubuntu, you can easily install the required packages with a single command:
+ *  <pre>  apt-get install g++ make doxygen graphviz libboost-dev libboost-graph-dev libboost-program-options-dev libboost-test-dev libgmp-dev cimg-dev</pre>
  *  (root permissions needed).
  *
  *  On Mac OS X (10.4 is known to work), these packages can be installed easily via MacPorts.
  *  If MacPorts is not already installed, install it according to the instructions at http://www.macports.org/.
  *  Then, a simple 
- *    <pre>  sudo port install gmake boost doxygen graphviz</pre>
+ *    <pre>  sudo port install gmake boost gmp doxygen graphviz</pre>
  *  should be enough to install everything that is needed.
  *  
  *  On Cygwin, the prebuilt Cygwin package boost-1.33.1-x is known not to work.
  *  You can however obtain the latest boost version (you need at least 1.37.0)
- *  from http://www.boost.org/ and compile/install it with:
+ *  from http://www.boost.org/ and build it as described in the next subsection.
  *
- *  <pre>  ./configure
- *  make
- *  make install
- *  </pre>
+ *  \subsubsection build-unix-boost Building boost under Cygwin
+ *
+ *  - Download the latest boost libraries from http://www.boost.org
+ *  - Build the required boost libraries using:
+ *    <pre>
+ *    ./bootstrap.sh --with-libraries=program_options,math,graph,test --prefix=/boost_root/
+ *    ./bjam</pre>
+ *  - In order to use dynamic linking, the boost .dll's should be somewhere in the path. 
+ *    This can be achieved by a command like:
+ *    <pre>
+ *    export PATH=$PATH:/boost_root/stage/lib</pre>
+ *
+ *
+ *  \subsection build-unix-libdai Building libDAI
  *
  *  To build the libDAI source, first copy a template Makefile.* to Makefile.conf
  *  (for example, copy Makefile.LINUX to Makefile.conf if you use GNU/Linux). 
- *  Then, edit the Makefile.conf template to adapt it to your local setup.
- *  Especially directories may differ from system to system. Finally, run
+ *  Then, edit the Makefile.conf template to adapt it to your local setup. In case
+ *  you want to use Boost libraries which are installed in non-standard locations,
+ *  you have to tell the compiler and linker about their locations (using the
+ *  -I, -L flags for GCC; also you may need to set the LD_LIBRARY_PATH environment 
+ *  variable correctly before running libDAI binaries). Platform independent build
+ *  options can be set in Makefile.ALL. Finally, run
  *  <pre>  make</pre>
  *  The build includes a regression test, which may take a while to complete.
  *
- *  If the build was successful, you can test the example program:
+ *  If the build is successful, you can test the example program:
  *  <pre>  examples/example tests/alarm.fg</pre>
- *  or the more elaborate test program:
+ *  or the more extensive test program:
  *  <pre>  tests/testdai --aliases tests/aliases.conf --filename tests/alarm.fg --methods JTREE_HUGIN BP_SEQMAX</pre>
  *
  *
  *  <hr size="1">
  *  \section build-windows Building libDAI under Windows
  *
+ *  \subsection build-windows-preparations Preparations
+ *
  *  You need:
- *  - A recent version of MicroSoft Visual Studio (2008 works)
- *  - recent boost C++ libraries (version 1.34 or higher)
+ *  - A recent version of MicroSoft Visual Studio (2008 is known to work)
+ *  - recent boost C++ libraries (version 1.37 or higher)
+ *  - GMP or MPIR library
  *  - GNU make (can be obtained from http://gnuwin32.sourceforge.net)
+ *  - CImg library (only for building the image segmentation example)
  *
  *  For the regression test, you need:
  *  - GNU diff, GNU sed (can be obtained from http://gnuwin32.sourceforge.net)
  *
+ *  \subsubsection build-windows-boost Building boost under Windows
+ *
+ *  Because building boost under Windows is tricky, I provide some guidance here.
+ *
+ *  - Download the boost zip file from http://www.boost.org/users/download
+ *    and unpack it somewhere.
+ *  - Download the bjam executable from http://www.boost.org/users/download
+ *    and unpack it somewhere else.
+ *  - Download Boost.Build (v2) from http://www.boost.org/docs/tools/build/index.html
+ *    and unpack it yet somewhere else.
+ *  - Edit the file \c boost-build.jam in the main boost directory to change the
+ *    \c BOOST_BUILD directory to the place where you put Boost.Build (use UNIX
+ *    / instead of Windows \ in pathnames).
+ *  - Copy the \c bjam.exe executable into the main boost directory.
+ *    Now if you issue <tt>"bjam --version"</tt> you should get a version and no errors.
+ *    Issueing <tt>"bjam --show-libraries"</tt> will show the libraries that will be built.
+ *  - The following command builds the boost libraries that are relevant for libDAI:
+ *    <pre>
+ *    bjam --with-graph --with-math --with-program_options --with-test link=static runtime-link=shared</pre>
+ *
+ *  \subsection build-windows-gmp Building GMP or MPIR under Windows
+ *  
+ *  Information about how to build GPR or MPIR under Windows can be found on the internet.
+ *  The user has to update Makefile.WINDOWS in order to link with the GPR/MPIR libraries.
+ *
+ *  \subsection build-windows-libdai Building libDAI
+ *
  *  To build the source, copy Makefile.WINDOWS to Makefile.conf. Then, edit 
- *  Makefile.conf to adapt it to your local setup. Finally, run (from the command line)
+ *  Makefile.conf to adapt it to your local setup. Platform independent 
+ *  build options can be set in Makefile.ALL. Finally, run (from the command line)
  *  <pre>  make</pre>
  *  The build includes a regression test, which may take a while to complete.
  *
- *  If the build was successful, you can test the example program:
- *  <pre>  example tests\alarm.fg</pre>
- *  or the more elaborate test program:
- *  <pre>  tests\\testdai --aliases tests\aliases.conf --filename tests\alarm.fg --methods JTREE_HUGIN BP_SEQMAX</pre>
+ *  If the build is successful, you can test the example program:
+ *  <pre>  examples\\example tests\\alarm.fg</pre>
+ *  or the more extensive test program:
+ *  <pre>  tests\\testdai --aliases tests\\aliases.conf --filename tests\\alarm.fg --methods JTREE_HUGIN BP_SEQMAX</pre>
  *
  *
  *  <hr size="1">
@@ -275,7 +314,7 @@
  *
  *  First, you need to build the libDAI source as described above for your
  *  platform. By default, the MatLab interface is disabled, so before compiling the
- *  source, you have to enable it in the Makefile.conf by setting
+ *  source, you have to enable it in Makefile.ALL by setting
  *  <pre>  WITH_MATLAB=true</pre>
  *  Also, you have to configure the MatLab-specific parts of
  *  Makefile.conf to match your system (in particular, the Makefile variables ME,
@@ -295,7 +334,7 @@
  *  at the MatLab prompt), which performs exact inference by the junction tree
  *  algorithm and approximate inference by belief propagation on the ALARM network:
  *  <pre>  cd path_to_libdai/matlab
- *  [psi] = dai_readfg ('../examples/alarm.fg');
+ *  [psi] = dai_readfg ('../tests/alarm.fg');
  *  [logZ,q,md,qv,qf] = dai (psi, 'JTREE', '[updates=HUGIN,verbose=0]')
  *  [logZ,q,md,qv,qf] = dai (psi, 'BP', '[updates=SEQMAX,tol=1e-9,maxiter=10000,logdomain=0]')</pre>
  *  where "path_to_libdai" has to be replaced with the directory in which libDAI
@@ -318,14 +357,15 @@
  */
 
 
-/** \page inference Graphical models and approximate inference
+/** \page terminology Terminology and conventions
  *
- *  \section inference-graphicalmodels Graphical models
+ *  \section terminology-graphicalmodels Graphical models
  *
  *  Commonly used graphical models are Bayesian networks and Markov random fields.
  *  In libDAI, both types of graphical models are represented by a slightly more 
  *  general type of graphical model: a factor graph [\ref KFL01].
  *
+ *  An example of a Bayesian network is: 
  *  \dot
  *  digraph bayesnet {
  *    size="1,1";
@@ -341,10 +381,11 @@
  *    x2 -> x4;
  *  }
  *  \enddot
- *
+ *  The probability distribution of a Bayesian network factorizes as:
  *  \f[ P(\mathbf{x}) = \prod_{i\in\mathcal{V}} P(x_i \,|\, x_{\mathrm{pa}(i)}) \f]
  *  where \f$\mathrm{pa}(i)\f$ are the parents of node \a i in a DAG.
  *
+ *  The same probability distribution can be represented as a Markov random field:
  *  \dot
  *  graph mrf {
  *    size="1.5,1.5";
@@ -362,12 +403,14 @@
  *  }
  *  \enddot
  *
+ *  The probability distribution of a Markov random field factorizes as:
  *  \f[ P(\mathbf{x}) = \frac{1}{Z} \prod_{C\in\mathcal{C}} \psi_C(x_C) \f]
  *  where \f$ \mathcal{C} \f$ are the cliques of an undirected graph, 
  *  \f$ \psi_C(x_C) \f$ are "potentials" or "compatibility functions", and
  *  \f$ Z \f$ is the partition sum which properly normalizes the probability
  *  distribution.
  *
+ *  Finally, the same probability distribution can be represented as a factor graph:
  *  \dot
  *  graph factorgraph {
  *    size="1.8,1";
@@ -392,6 +435,7 @@
  *  }
  *  \enddot
  *
+ *  The probability distribution of a factor graph factorizes as:
  *  \f[ P(\mathbf{x}) = \frac{1}{Z} \prod_{I\in \mathcal{F}} f_I(x_I) \f]
  *  where \f$ \mathcal{F} \f$ are the factor nodes of a factor graph (a 
  *  bipartite graph consisting of variable nodes and factor nodes), 
@@ -407,7 +451,7 @@
  *  This is why libDAI uses a factor graph as representation of a 
  *  graphical model, implemented in the dai::FactorGraph class.
  *
- *  \section inference-inference Inference tasks
+ *  \section terminology-inference Inference tasks
  *
  *  Given a factor graph, specified by the variable nodes \f$\{x_i\}_{i\in\mathcal{V}}\f$
  *  the factor nodes \f$ \mathcal{F} \f$, the graph structure, and the factors
@@ -432,23 +476,85 @@
  *  Approximate inference:
  *  - Mean Field: dai::MF
  *  - (Loopy) Belief Propagation: dai::BP [\ref KFL01]
+ *  - Fractional Belief Propagation: dai::FBP [\ref WiH03]
+ *  - Tree-Reweighted Belief Propagation: dai::TRWBP [\ref WJW03]
  *  - Tree Expectation Propagation: dai::TreeEP [\ref MiQ04]
  *  - Generalized Belief Propagation: dai::HAK [\ref YFW05]
  *  - Double-loop GBP: dai::HAK [\ref HAK03]
  *  - Loop Corrected Belief Propagation: dai::MR [\ref MoR05] and dai::LC [\ref MoK07]
  *  - Gibbs sampling: dai::Gibbs
- *  - Clamped Belief Propagation: dai::CBP [\ref EaG09]
+ *  - Conditioned Belief Propagation: dai::CBP [\ref EaG09]
+ *  - Decimation algorithm: dai::DecMAP
  *
  *  Not all inference tasks are implemented by each method: calculating MAP states
- *  is only possible with dai::JTree and dai::BP, calculating partition sums is
+ *  is only possible with dai::JTree, dai::BP and dai::DECMAP; calculating partition sums is
  *  not possible with dai::MR, dai::LC and dai::Gibbs.
  *
- *  \section inference-learning Parameter learning
+ *  \section terminology-learning Parameter learning
  *
  *  In addition, libDAI supports parameter learning of conditional probability
  *  tables by Expectation Maximization (or Maximum Likelihood, if there is no
  *  missing data). This is implemented in dai::EMAlg.
  *  
+ *  \section terminology-variables-states Variables and states
+ *
+ *  Linear states are a concept that is used often in libDAI, for example for storing
+ *  and accessing factors, which are functions mapping from states of a set of variables
+ *  to the real numbers. Internally, a factor is stored as an array, and the array index
+ *  of an entry corresponds with the linear state of the set of variables. Below we will
+ *  define variables, states and linear states of (sets of) variables.
+ *
+ *  \subsection terminology-variables Variables
+ *
+ *  Each (random) \a variable has a unique identifier, its \a label (which has
+ *  a non-negative integer value). If two variables have the same
+ *  label, they are considered as identical. A variable can take on a finite
+ *  number of different values or \a states.
+ *  
+ *  We use the following notational conventions. The discrete
+ *  random variable with label \f$l\f$ is denoted as \f$x_l\f$, and the number
+ *  of possible values of this variable as \f$S_{x_l}\f$ or simply \f$S_l\f$. 
+ *  The set of possible values of variable \f$x_l\f$ is denoted 
+ *  \f$X_l := \{0,1,\dots,S_l-1\}\f$ and called its \a state \a space.
+ *
+ *  \subsection terminology-variable-sets Sets of variables and the canonical ordering
+ *  
+ *  Let \f$A := \{x_{l_1},x_{l_2},\dots,x_{l_n}\}\f$ be a set of variables. 
+ *
+ *  The \a canonical \a ordering of the variables in \a A is induced by their labels.
+ *  That is: if \f$l_1 < l_2\f$, then \f$x_{l_1}\f$ occurs before \f$x_{l_2}\f$ in the
+ *  canonical ordering. Below, we will assume that \f$(l_i)_{i=1}^n\f$ is
+ *  ordered according to the canonical ordering, i.e., \f$l_1 < l_2 < \dots < l_n\f$.
+ *
+ *  \subsection terminology-variable-states States and linear states of sets of variables
+ *
+ *  A \a state of the variables in \a A refers to a joint assignment of the 
+ *  variables, or in other words, to an element of the Cartesian product 
+ *  \f$ \prod_{i=1}^n X_{l_i}\f$ of the state spaces of the variables in \a A.
+ *  Note that a state can also be interpreted as a mapping from variables (or
+ *  variable labels) to the natural numbers, which assigns to a variable (or its
+ *  label) the corresponding state of the variable.
+ *
+ *  A state of \a n variables can be represented as an n-tuple of 
+ *  non-negative integers: \f$(s_1,s_2,\dots,s_n)\f$ corresponds to the
+ *  joint assignment \f$x_{l_1} = s_1, \dots, x_{l_n} = s_n\f$.
+ *  Alternatively, a state can be represented compactly as one non-negative integer;
+ *  this representation is called a \a linear \a state. The linear state
+ *  \a s corresponding to the state \f$(s_1,s_2,\dots,s_n)\f$ would be:
+ *  \f[
+ *    s := \sum_{i=1}^n s_i \prod_{j=1}^{i-1} S_{l_j} 
+ *       = s_1 + s_2 S_{l_1} + s_3 S_{l_1} S_{l_2} + \dots + s_n S_{l_1} \cdots S_{l_{n-1}}.
+ *  \f]
+ *
+ *  Vice versa, given a linear state \a s for the variables \a A, the
+ *  corresponding state \f$s_i\f$ of the \a i 'th variable \f$x_{l_i}\f$ (according to
+ *  the canonical ordering of the variables in \a A) is given by
+ *  \f[
+ *    s_i = \left\lfloor\frac{s \mbox { mod } \prod_{j=1}^i S_{l_j}}{\prod_{j=1}^{i-1} S_{l_j}}\right\rfloor.
+ *  \f]
+ *
+ *  Finally, the \a number \a of \a states of the set of variables \a A is simply the 
+ *  number of different joint assignments of the variables, that is, \f$\prod_{i=1}^n S_{l_i}\f$.
  */
 
 
@@ -507,7 +613,6 @@
  *  8 8.9
  *  9 1.3
  *  10 1.6
- *  12 6.4
  *  11 2.6
  *  </pre>
  *
@@ -631,7 +736,7 @@
  *  contain the variable labels of the variables on which that factor depends, 
  *  in a specific ordering. This ordering can be different from the canonical 
  *  ordering of the variables used internally in libDAI (which would be sorted 
- *  ascendingly according to the variable labels). The odering of the variables
+ *  ascendingly according to the variable labels). The ordering of the variables
  *  specifies the implicit ordering of the shared parameters: when iterating
  *  over all shared parameters, the corresponding index of the first variable
  *  changes fastest (in the inner loop), and the corresponding index of the
@@ -640,82 +745,116 @@
  *  variables) share parameters in parameter learning using EM. This convention
  *  is similar to the convention used in factor blocks in a factor graph .fg 
  *  file (see \ref fileformats-factorgraph-factor).
+ *
+ *  \section fileformats-aliases Aliases file format
+ *
+ *  An aliases file is basically a list of "macros" and the strings that they
+ *  should be substituted with.
+ *  
+ *  Each line of the aliases file can be either empty, contain a comment 
+ *  (if the first character is a '#') or contain an alias. In the latter case, 
+ *  the line should contain a colon; the part before the colon contains the 
+ *  name of the alias, the part after the colon the string that it should be 
+ *  substituted with. Any whitespace before and after the colon is ignored.
+ *
+ *  For example, the following line would define the alias \c BP_SEQFIX
+ *  as a shorthand for "BP[updates=SEQFIX,tol=1e-9,maxiter=10000,logdomain=0]":
+ *  <pre>
+ *  BP_SEQFIX:  BP[updates=SEQFIX,tol=1e-9,maxiter=10000,logdomain=0]
+ *  </pre>
+ *
+ *  Aliases files can be used to store default options for algorithms.
  */
 
 /** \page bibliography Bibliography
- *  \anchor KFL01 \ref KFL01
- *  F. R. Kschischang and B. J. Frey and H.-A. Loeliger (2001):
- *  "Factor Graphs and the Sum-Product Algorithm",
- *  <em>IEEE Transactions on Information Theory</em> 47(2):498-519.
- *  http://ieeexplore.ieee.org/xpl/freeabs_all.jsp?arnumber=910572
- *
- *  \anchor MiQ04 \ref MiQ04
- *  T. Minka and Y. Qi (2004):
- *  "Tree-structured Approximations by Expectation Propagation",
- *  <em>Advances in Neural Information Processing Systems</em> (NIPS) 16.
- *  http://books.nips.cc/papers/files/nips16/NIPS2003_AA25.pdf
- *
- *  \anchor MoR05 \ref MoR05
- *  A. Montanari and T. Rizzo (2005):
- *  "How to Compute Loop Corrections to the Bethe Approximation",
- *  <em>Journal of Statistical Mechanics: Theory and Experiment</em>
- *  2005(10)-P10011.
- *  http://stacks.iop.org/1742-5468/2005/P10011
- *
- *  \anchor YFW05 \ref YFW05
- *  J. S. Yedidia and W. T. Freeman and Y. Weiss (2005):
- *  "Constructing Free-Energy Approximations and Generalized Belief Propagation Algorithms",
- *  <em>IEEE Transactions on Information Theory</em>
- *  51(7):2282-2312.
- *  http://ieeexplore.ieee.org/xpl/freeabs_all.jsp?arnumber=1459044
- *
- *  \anchor HAK03 \ref HAK03
- *  T. Heskes and C. A. Albers and H. J. Kappen (2003):
- *  "Approximate Inference and Constrained Optimization",
- *  <em>Proceedings of the 19th Annual Conference on Uncertainty in Artificial Intelligence (UAI-03)</em> pp. 313-320.
- *  http://www.snn.ru.nl/reports/Heskes.uai2003.ps.gz
- *
- *  \anchor MoK07 \ref MoK07
- *  J. M. Mooij and H. J. Kappen (2007):
- *  "Loop Corrections for Approximate Inference on Factor Graphs",
- *  <em>Journal of Machine Learning Research</em> 8:1113-1143.
- *  http://www.jmlr.org/papers/volume8/mooij07a/mooij07a.pdf
- *
- *  \anchor MoK07b \ref MoK07b
- *  J. M. Mooij and H. J. Kappen (2007):
- *  "Sufficient Conditions for Convergence of the Sum-Product Algorithm",
- *  <em>IEEE Transactions on Information Theory</em> 53(12):4422-4437.
- *  http://ieeexplore.ieee.org/xpl/freeabs_all.jsp?arnumber=4385778
- *
  *  \anchor EaG09 \ref EaG09
  *  F. Eaton and Z. Ghahramani (2009):
  *  "Choosing a Variable to Clamp",
- *  <em>Proceedings of the Twelfth International Conference on Artificial Intelligence and Statistics (AISTATS 2009)</em> 5:145-152
+ *  <em>Proceedings of the Twelfth International Conference on Artificial Intelligence and Statistics (AISTATS 2009)</em> 5:145-152,
  *  http://jmlr.csail.mit.edu/proceedings/papers/v5/eaton09a/eaton09a.pdf
- *
- *  \anchor StW99 \ref StW99
- *  A. Steger and N. C. Wormald (1999):
- *  "Generating Random Regular Graphs Quickly",
- *  <em>Combinatorics, Probability and Computing</em> Vol 8, Issue 4, pp. 377-396
- *  http://www.math.uwaterloo.ca/~nwormald/papers/randgen.pdf
  *
  *  \anchor EMK06 \ref EMK06
  *  G. Elidan and I. McGraw and D. Koller (2006):
  *  "Residual Belief Propagation: Informed Scheduling for Asynchronous Message Passing",
- *  <em>Proceedings of the 22nd Annual Conference on Uncertainty in Artificial Intelligence (UAI-06)</em>
+ *  <em>Proceedings of the 22nd Annual Conference on Uncertainty in Artificial Intelligence (UAI-06)</em>,
  *  http://uai.sis.pitt.edu/papers/06/UAI2006_0091.pdf
  *
- *  \anchor WiH03 \ref WiH03
- *  W. Wiegerinck and T. Heskes (2003):
- *  "Fractional Belief Propagation",
- *  <em>Advances in Neural Information Processing Systems</em> (NIPS) 15, pp. 438-445.
- *  http://books.nips.cc/papers/files/nips15/LT16.pdf
+ *  \anchor HAK03 \ref HAK03
+ *  T. Heskes and C. A. Albers and H. J. Kappen (2003):
+ *  "Approximate Inference and Constrained Optimization",
+ *  <em>Proceedings of the 19th Annual Conference on Uncertainty in Artificial Intelligence (UAI-03)</em> pp. 313-320,
+ *  http://www.snn.ru.nl/reports/Heskes.uai2003.ps.gz
  *
+ *  \anchor KFL01 \ref KFL01
+ *  F. R. Kschischang and B. J. Frey and H.-A. Loeliger (2001):
+ *  "Factor Graphs and the Sum-Product Algorithm",
+ *  <em>IEEE Transactions on Information Theory</em> 47(2):498-519,
+ *  http://ieeexplore.ieee.org/xpl/freeabs_all.jsp?arnumber=910572
+ *
+ *  \anchor KoF09 \ref KoF09
+ *  D. Koller and N. Friedman (2009):
+ *  <em>Probabilistic Graphical Models - Principles and Techniques</em>,
+ *  The MIT Press, Cambridge, Massachusetts, London, England.
+
  *  \anchor Min05 \ref Min05
  *  T. Minka (2005):
  *  "Divergence measures and message passing",
  *  <em>MicroSoft Research Technical Report</em> MSR-TR-2005-173,
  *  http://research.microsoft.com/en-us/um/people/minka/papers/message-passing/minka-divergence.pdf
+ *
+ *  \anchor MiQ04 \ref MiQ04
+ *  T. Minka and Y. Qi (2004):
+ *  "Tree-structured Approximations by Expectation Propagation",
+ *  <em>Advances in Neural Information Processing Systems</em> (NIPS) 16,
+ *  http://books.nips.cc/papers/files/nips16/NIPS2003_AA25.pdf
+ *
+ *  \anchor MoK07 \ref MoK07
+ *  J. M. Mooij and H. J. Kappen (2007):
+ *  "Loop Corrections for Approximate Inference on Factor Graphs",
+ *  <em>Journal of Machine Learning Research</em> 8:1113-1143,
+ *  http://www.jmlr.org/papers/volume8/mooij07a/mooij07a.pdf
+ *
+ *  \anchor MoK07b \ref MoK07b
+ *  J. M. Mooij and H. J. Kappen (2007):
+ *  "Sufficient Conditions for Convergence of the Sum-Product Algorithm",
+ *  <em>IEEE Transactions on Information Theory</em> 53(12):4422-4437,
+ *  http://ieeexplore.ieee.org/xpl/freeabs_all.jsp?arnumber=4385778
+ *
+ *  \anchor Moo08 \ref Moo08
+ *  J. M. Mooij (2008):
+ *  "Understanding and Improving Belief Propagation",
+ *  <em>Ph.D. Thesis</em> Radboud University Nijmegen
+ *  http://webdoc.ubn.ru.nl/mono/m/mooij_j/undeanimb.pdf
+ *
+ *  \anchor MoR05 \ref MoR05
+ *  A. Montanari and T. Rizzo (2005):
+ *  "How to Compute Loop Corrections to the Bethe Approximation",
+ *  <em>Journal of Statistical Mechanics: Theory and Experiment</em> 2005(10)-P10011,
+ *  http://stacks.iop.org/1742-5468/2005/P10011
+ *
+ *  \anchor StW99 \ref StW99
+ *  A. Steger and N. C. Wormald (1999):
+ *  "Generating Random Regular Graphs Quickly",
+ *  <em>Combinatorics, Probability and Computing</em> Vol 8, Issue 4, pp. 377-396,
+ *  http://www.math.uwaterloo.ca/~nwormald/papers/randgen.pdf
+ *
+ *  \anchor WiH03 \ref WiH03
+ *  W. Wiegerinck and T. Heskes (2003):
+ *  "Fractional Belief Propagation",
+ *  <em>Advances in Neural Information Processing Systems</em> (NIPS) 15, pp. 438-445,
+ *  http://books.nips.cc/papers/files/nips15/LT16.pdf
+ *
+ *  \anchor WJW03 \ref WJW03
+ *  M. J. Wainwright, T. S. Jaakkola and A. S. Willsky (2003):
+ *  "Tree-reweighted belief propagation algorithms and approximate ML estimation by pseudo-moment matching",
+ *  <em>9th Workshop on Artificial Intelligence and Statistics</em>,
+ *  http://www.eecs.berkeley.edu/~wainwrig/Papers/WJW_AIStat03.pdf
+ *
+ *  \anchor YFW05 \ref YFW05
+ *  J. S. Yedidia and W. T. Freeman and Y. Weiss (2005):
+ *  "Constructing Free-Energy Approximations and Generalized Belief Propagation Algorithms",
+ *  <em>IEEE Transactions on Information Theory</em> 51(7):2282-2312,
+ *  http://ieeexplore.ieee.org/xpl/freeabs_all.jsp?arnumber=1459044
  */
 
 

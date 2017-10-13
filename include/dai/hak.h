@@ -1,18 +1,17 @@
 /*  This file is part of libDAI - http://www.libdai.org/
  *
- *  libDAI is licensed under the terms of the GNU General Public License version
- *  2, or (at your option) any later version. libDAI is distributed without any
- *  warranty. See the file COPYING for more details.
+ *  Copyright (c) 2006-2011, The libDAI authors. All rights reserved.
  *
- *  Copyright (C) 2006-2009  Joris Mooij  [joris dot mooij at libdai dot org]
- *  Copyright (C) 2006-2007  Radboud University Nijmegen, The Netherlands
+ *  Use of this source code is governed by a BSD-style license that can be found in the LICENSE file.
  */
 
 
 /// \file
 /// \brief Defines class HAK, which implements a variant of Generalized Belief Propagation.
-/// \todo Implement Bethe approximation as a standard region graph choice in HAK.
 /// \idea Implement more general region graphs and corresponding Generalized Belief Propagation updates as described in [\ref YFW05].
+/// \todo Use ClusterGraph instead of a vector<VarSet> for speed.
+/// \todo Optimize this code for large factor graphs.
+/// \todo Implement GBP parent-child  algorithm.
 
 
 #ifndef __defined_libdai_hak_h
@@ -53,8 +52,9 @@ class HAK : public DAIAlgRG {
              *   - MIN minimal clusters, i.e., one outer region for each maximal factor
              *   - DELTA one outer region for each variable and its Markov blanket
              *   - LOOP one cluster for each loop of length at most \a Properties::loopdepth, and in addition one cluster for each maximal factor
+             *   - BETHE Bethe approximation (one outer region for each maximal factor, inner regions are single variables)
              */
-            DAI_ENUM(ClustersType,MIN,DELTA,LOOP);
+            DAI_ENUM(ClustersType,MIN,BETHE,DELTA,LOOP);
 
             /// Enumeration of possible message initializations
             DAI_ENUM(InitType,UNIFORM,RANDOM);
@@ -64,6 +64,9 @@ class HAK : public DAIAlgRG {
 
             /// Maximum number of iterations
             size_t maxiter;
+
+            /// Maximum time (in seconds)
+            double maxtime;
 
             /// Tolerance for convergence test
             Real tol;
@@ -84,9 +87,6 @@ class HAK : public DAIAlgRG {
             size_t loopdepth;
         } props;
 
-        /// Name of this inference algorithm
-        static const char *Name;
-
     public:
     /// \name Constructors/destructors
     //@{
@@ -94,7 +94,8 @@ class HAK : public DAIAlgRG {
         HAK() : DAIAlgRG(), _Qa(), _Qb(), _muab(), _muba(), _maxdiff(0.0), _iters(0U), props() {}
 
         /// Construct from FactorGraph \a fg and PropertySet \a opts
-        /** \param opts Parameters @see Properties
+        /** \param fg Factor graph.
+         *  \param opts Parameters @see Properties
          */
         HAK( const FactorGraph &fg, const PropertySet &opts );
 
@@ -106,8 +107,8 @@ class HAK : public DAIAlgRG {
     /// \name General InfAlg interface
     //@{
         virtual HAK* clone() const { return new HAK(*this); }
-        virtual std::string identify() const;
-        virtual Factor belief( const Var &v ) const;
+        virtual HAK* construct( const FactorGraph &fg, const PropertySet &opts ) const { return new HAK( fg, opts ); }
+        virtual std::string name() const { return "HAK"; }
         virtual Factor belief( const VarSet &vs ) const;
         virtual std::vector<Factor> beliefs() const;
         virtual Real logZ() const;
@@ -116,6 +117,7 @@ class HAK : public DAIAlgRG {
         virtual Real run();
         virtual Real maxDiff() const { return _maxdiff; }
         virtual size_t Iterations() const { return _iters; }
+        virtual void setMaxIter( size_t maxiter ) { props.maxiter = maxiter; }
         virtual void setProperties( const PropertySet &opts );
         virtual PropertySet getProperties() const;
         virtual std::string printProperties() const;

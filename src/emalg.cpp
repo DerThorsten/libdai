@@ -1,11 +1,8 @@
 /*  This file is part of libDAI - http://www.libdai.org/
  *
- *  libDAI is licensed under the terms of the GNU General Public License version
- *  2, or (at your option) any later version. libDAI is distributed without any
- *  warranty. See the file COPYING for more details.
+ *  Copyright (c) 2006-2011, The libDAI authors. All rights reserved.
  *
- *  Copyright (C) 2009  Charles Vaske  [cvaske at soe dot ucsc dot edu]
- *  Copyright (C) 2009  University of California, Santa Cruz
+ *  Use of this source code is governed by a BSD-style license that can be found in the LICENSE file.
  */
 
 
@@ -64,12 +61,14 @@ Prob CondProbEstimation::estimate() {
     for( size_t parent = 0; parent < _stats.size(); parent += _target_dim ) {
         // calculate norm
         size_t top = parent + _target_dim;
-        Real norm = std::accumulate( &(_stats[parent]), &(_stats[parent]) + _target_dim, 0.0 );
+        Real norm = 0.0;
+        for( size_t i = parent; i < top; ++i )
+            norm += _stats[i];
         if( norm != 0.0 )
             norm = 1.0 / norm;
         // normalize
         for( size_t i = parent; i < top; ++i )
-            _stats[i] *= norm;
+            _stats.set( i, _stats[i] * norm );
     }
     // reset _stats to _initial_stats
     Prob result = _stats;
@@ -127,8 +126,7 @@ SharedParameters::SharedParameters( std::istream &is, const FactorGraph &fg )
         while( line.size() == 0 && getline(is, line) )
             ;
 
-        std::vector<std::string> fields;
-        tokenizeString(line, fields, " \t");
+        std::vector<std::string> fields = tokenizeString( line, true, " \t" );
 
         // Lookup the factor in the factorgraph
         if( fields.size() < 1 )
@@ -171,9 +169,9 @@ void SharedParameters::collectSufficientStatistics( InfAlg &alg ) {
         VarSet &vs = _varsets[i->first];
 
         Factor b = alg.belief(vs);
-        Prob p( b.states(), 0.0 );
-        for( size_t entry = 0; entry < b.states(); ++entry )
-            p[entry] = b[perm.convertLinearIndex(entry)]; // apply inverse permutation
+        Prob p( b.nrStates(), 0.0 );
+        for( size_t entry = 0; entry < b.nrStates(); ++entry )
+            p.set( entry, b[perm.convertLinearIndex(entry)] ); // apply inverse permutation
         _estimation->addSufficientStatistics( p );
     }
 }
@@ -186,8 +184,8 @@ void SharedParameters::setParameters( FactorGraph &fg ) {
         VarSet &vs = _varsets[i->first];
 
         Factor f( vs, 0.0 );
-        for( size_t entry = 0; entry < f.states(); ++entry )
-            f[perm.convertLinearIndex(entry)] = p[entry];
+        for( size_t entry = 0; entry < f.nrStates(); ++entry )
+            f.set( perm.convertLinearIndex(entry), p[entry] );
 
         fg.setFactor( i->first, f );
     }

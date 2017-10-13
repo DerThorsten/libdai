@@ -1,11 +1,8 @@
 /*  This file is part of libDAI - http://www.libdai.org/
  *
- *  libDAI is licensed under the terms of the GNU General Public License version
- *  2, or (at your option) any later version. libDAI is distributed without any
- *  warranty. See the file COPYING for more details.
+ *  Copyright (c) 2006-2011, The libDAI authors. All rights reserved.
  *
- *  Copyright (C) 2006-2009  Joris Mooij  [joris dot mooij at libdai dot org]
- *  Copyright (C) 2006-2007  Radboud University Nijmegen, The Netherlands
+ *  Use of this source code is governed by a BSD-style license that can be found in the LICENSE file.
  */
 
 
@@ -21,6 +18,8 @@ std::ostream& operator<< (std::ostream & os, const Property & p) {
     os << p.first << "=";
     if( p.second.type() == typeid(size_t) )
         os << boost::any_cast<size_t>(p.second);
+    else if( p.second.type() == typeid(int) )
+        os << boost::any_cast<int>(p.second);
     else if( p.second.type() == typeid(std::string) )
         os << boost::any_cast<std::string>(p.second);
     else if( p.second.type() == typeid(double) )
@@ -91,7 +90,7 @@ std::istream& operator>> (std::istream& is, PropertySet & ps) {
         std::string value = s.substr(token_start, token_end - token_start);
 
         // store the key,value pair
-        ps.Set(key,value);
+        ps.set(key,value);
 
         // go on with the next one
         token_start = token_end + 1;

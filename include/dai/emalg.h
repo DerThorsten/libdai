@@ -1,11 +1,8 @@
 /*  This file is part of libDAI - http://www.libdai.org/
  *
- *  libDAI is licensed under the terms of the GNU General Public License version
- *  2, or (at your option) any later version. libDAI is distributed without any
- *  warranty. See the file COPYING for more details.
+ *  Copyright (c) 2006-2011, The libDAI authors. All rights reserved.
  *
- *  Copyright (C) 2009  Charles Vaske  [cvaske at soe dot ucsc dot edu]
- *  Copyright (C) 2009  University of California, Santa Cruz
+ *  Use of this source code is governed by a BSD-style license that can be found in the LICENSE file.
  */
 
 
@@ -25,6 +22,7 @@
 
 /// \file
 /// \brief Defines classes related to Expectation Maximization (EMAlg, ParameterEstimation, CondProbEstimation and SharedParameters)
+/// \todo Implement parameter estimation for undirected models / factor graphs.
 
 
 namespace dai {
@@ -293,9 +291,6 @@ class MaximizationStep {
  *  parameters, which may result in faster convergence in some cases.
  *
  *  \author Charles Vaske
- *
- *  \todo Expand the sprinkler example such that it generates a sample of the probability distribution,
- *  and add another example that estimates the factor parameters of the sprinkler network using EM from this sample.
  */
 class EMAlg {
     private:
@@ -405,6 +400,11 @@ class EMAlg {
 
 
 } // end of namespace dai
+
+
+/** \example example_sprinkler_em.cpp
+ *  This example shows how to use the EMAlg class.
+ */
 
 
 #endif

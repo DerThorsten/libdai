@@ -1,10 +1,8 @@
 /*  This file is part of libDAI - http://www.libdai.org/
  *
- *  libDAI is licensed under the terms of the GNU General Public License version
- *  2, or (at your option) any later version. libDAI is distributed without any
- *  warranty. See the file COPYING for more details.
+ *  Copyright (c) 2006-2011, The libDAI authors. All rights reserved.
  *
- *  Copyright (C) 2009  Frederik Eaton [frederik at ofb dot net]
+ *  Use of this source code is governed by a BSD-style license that can be found in the LICENSE file.
  */
 
 
@@ -19,10 +17,6 @@ namespace dai {
 
 
 using namespace std;
-
-
-/// Convenience typedef
-typedef BipartiteGraph::Neighbor Neighbor;
 
 
 /// Returns the entry of the I'th factor corresponding to a global state
@@ -155,9 +149,9 @@ void BBP::RegenerateInds() {
     for( size_t i = 0; i < _fg->nrVars(); i++ ) {
         _indices[i].clear();
         _indices[i].reserve( _fg->nbV(i).size() );
-        foreach( const Neighbor &I, _fg->nbV(i) ) {
+        bforeach( const Neighbor &I, _fg->nbV(i) ) {
             _ind_t index;
-            index.reserve( _fg->factor(I).states() );
+            index.reserve( _fg->factor(I).nrStates() );
             for( IndexFor k(_fg->var(i), _fg->factor(I).vars()); k.valid(); ++k )
                 index.push_back( k );
             _indices[i].push_back( index );
@@ -171,9 +165,9 @@ void BBP::RegenerateT() {
     _Tmsg.resize( _fg->nrVars() );
     for( size_t i = 0; i < _fg->nrVars(); i++ ) {
         _Tmsg[i].resize( _fg->nbV(i).size() );
-        foreach( const Neighbor &I, _fg->nbV(i) ) {
+        bforeach( const Neighbor &I, _fg->nbV(i) ) {
             Prob prod( _fg->var(i).states(), 1.0 );
-            foreach( const Neighbor &J, _fg->nbV(i) )
+            bforeach( const Neighbor &J, _fg->nbV(i) )
                 if( J.node != I.node )
                     prod *= _bp_dual.msgM( i, J.iter );
             _Tmsg[i][I.iter] = prod;
@@ -187,15 +181,15 @@ void BBP::RegenerateU() {
     _Umsg.resize( _fg->nrFactors() );
     for( size_t I = 0; I < _fg->nrFactors(); I++ ) {
         _Umsg[I].resize( _fg->nbF(I).size() );
-        foreach( const Neighbor &i, _fg->nbF(I) ) {
-            Prob prod( _fg->factor(I).states(), 1.0 );
-            foreach( const Neighbor &j, _fg->nbF(I) )
+        bforeach( const Neighbor &i, _fg->nbF(I) ) {
+            Prob prod( _fg->factor(I).nrStates(), 1.0 );
+            bforeach( const Neighbor &j, _fg->nbF(I) )
                 if( i.node != j.node ) {
                     Prob n_jI( _bp_dual.msgN( j, j.dual ) );
                     const _ind_t &ind = _index( j, j.dual );
                     // multiply prod by n_jI
                     for( size_t x_I = 0; x_I < prod.size(); x_I++ )
-                        prod[x_I] *= n_jI[ind[x_I]];
+                        prod.set( x_I, prod[x_I] * n_jI[ind[x_I]] );
                 }
             _Umsg[I][i.iter] = prod;
         }
@@ -208,17 +202,17 @@ void BBP::RegenerateS() {
     _Smsg.resize( _fg->nrVars() );
     for( size_t i = 0; i < _fg->nrVars(); i++ ) {
         _Smsg[i].resize( _fg->nbV(i).size() );
-        foreach( const Neighbor &I, _fg->nbV(i) ) {
+        bforeach( const Neighbor &I, _fg->nbV(i) ) {
             _Smsg[i][I.iter].resize( _fg->nbF(I).size() );
-            foreach( const Neighbor &j, _fg->nbF(I) )
+            bforeach( const Neighbor &j, _fg->nbF(I) )
                 if( i != j ) {
                     Factor prod( _fg->factor(I) );
-                    foreach( const Neighbor &k, _fg->nbF(I) ) {
+                    bforeach( const Neighbor &k, _fg->nbF(I) ) {
                         if( k != i && k.node != j.node ) {
                             const _ind_t &ind = _index( k, k.dual );
                             Prob p( _bp_dual.msgN( k, k.dual ) );
-                            for( size_t x_I = 0; x_I < prod.states(); x_I++ )
-                                prod.p()[x_I] *= p[ind[x_I]];
+                            for( size_t x_I = 0; x_I < prod.nrStates(); x_I++ )
+                                prod.set( x_I, prod[x_I] * p[ind[x_I]] );
                         }
                     }
                     // "Marginalize" onto i|j (unnormalized)
@@ -236,12 +230,12 @@ void BBP::RegenerateR() {
     _Rmsg.resize( _fg->nrFactors() );
     for( size_t I = 0; I < _fg->nrFactors(); I++ ) {
         _Rmsg[I].resize( _fg->nbF(I).size() );
-        foreach( const Neighbor &i, _fg->nbF(I) ) {
+        bforeach( const Neighbor &i, _fg->nbF(I) ) {
             _Rmsg[I][i.iter].resize( _fg->nbV(i).size() );
-            foreach( const Neighbor &J, _fg->nbV(i) ) {
+            bforeach( const Neighbor &J, _fg->nbV(i) ) {
                 if( I != J ) {
                     Prob prod( _fg->var(i).states(), 1.0 );
-                    foreach( const Neighbor &K, _fg->nbV(i) )
+                    bforeach( const Neighbor &K, _fg->nbV(i) )
                         if( K.node != I && K.node != J.node )
                             prod *= _bp_dual.msgM( i, K.iter );
                     _Rmsg[I][i.iter][J.iter] = prod;
@@ -270,7 +264,7 @@ void BBP::RegeneratePsiAdjoints() {
     for( size_t i = 0; i < _fg->nrVars(); i++ ) {
         Prob p( _adj_b_V_unnorm[i] );
         DAI_ASSERT( p.size() == _fg->var(i).states() );
-        foreach( const Neighbor &I, _fg->nbV(i) )
+        bforeach( const Neighbor &I, _fg->nbV(i) )
             p *= _bp_dual.msgM( i, I.iter );
         p += _init_adj_psi_V[i];
         _adj_psi_V.push_back( p );
@@ -279,13 +273,13 @@ void BBP::RegeneratePsiAdjoints() {
     _adj_psi_F.reserve( _fg->nrFactors() );
     for( size_t I = 0; I < _fg->nrFactors(); I++ ) {
         Prob p( _adj_b_F_unnorm[I] );
-        DAI_ASSERT( p.size() == _fg->factor(I).states() );
-        foreach( const Neighbor &i, _fg->nbF(I) ) {
+        DAI_ASSERT( p.size() == _fg->factor(I).nrStates() );
+        bforeach( const Neighbor &i, _fg->nbF(I) ) {
             Prob n_iI( _bp_dual.msgN( i, i.dual ) );
             const _ind_t& ind = _index( i, i.dual );
             // multiply prod with n_jI
             for( size_t x_I = 0; x_I < p.size(); x_I++ )
-                p[x_I] *= n_iI[ind[x_I]];
+                p.set( x_I, p[x_I] * n_iI[ind[x_I]] );
         }
         p += _init_adj_psi_F[I];
         _adj_psi_F.push_back( p );
@@ -309,22 +303,22 @@ void BBP::RegenerateParMessageAdjoints() {
         _adj_m_unnorm[i].resize( n_i );
         _new_adj_n[i].resize( n_i );
         _new_adj_m[i].resize( n_i );
-        foreach( const Neighbor &I, _fg->nbV(i) ) {
+        bforeach( const Neighbor &I, _fg->nbV(i) ) {
             { // calculate adj_n
                 Prob prod( _fg->factor(I).p() );
                 prod *= _adj_b_F_unnorm[I];
-                foreach( const Neighbor &j, _fg->nbF(I) )
+                bforeach( const Neighbor &j, _fg->nbF(I) )
                     if( i != j ) {
                         Prob n_jI( _bp_dual.msgN( j, j.dual ) );
                         const _ind_t &ind = _index( j, j.dual );
                         // multiply prod with n_jI
                         for( size_t x_I = 0; x_I < prod.size(); x_I++ )
-                            prod[x_I] *= n_jI[ind[x_I]];
+                            prod.set( x_I, prod[x_I] * n_jI[ind[x_I]] );
                     }
                 Prob marg( _fg->var(i).states(), 0.0 );
                 const _ind_t &ind = _index( i, I.iter );
                 for( size_t r = 0; r < prod.size(); r++ )
-                    marg[ind[r]] += prod[r];
+                    marg.set( ind[r], marg[ind[r]] + prod[r] );
                 _new_adj_n[i][I.iter] = marg;
                 upMsgN( i, I.iter );
             }
@@ -332,7 +326,7 @@ void BBP::RegenerateParMessageAdjoints() {
             { // calculate adj_m
                 Prob prod( _adj_b_V_unnorm[i] );
                 DAI_ASSERT( prod.size() == _fg->var(i).states() );
-                foreach( const Neighbor &J, _fg->nbV(i) )
+                bforeach( const Neighbor &J, _fg->nbV(i) )
                     if( J.node != I.node )
                         prod *= _bp_dual.msgM(i,J.iter);
                 _new_adj_m[i][I.iter] = prod;
@@ -353,11 +347,11 @@ void BBP::RegenerateSeqMessageAdjoints() {
         _adj_m[i].resize( n_i );
         _adj_m_unnorm[i].resize( n_i );
         _new_adj_m[i].resize( n_i );
-        foreach( const Neighbor &I, _fg->nbV(i) ) {
+        bforeach( const Neighbor &I, _fg->nbV(i) ) {
             // calculate adj_m
             Prob prod( _adj_b_V_unnorm[i] );
             DAI_ASSERT( prod.size() == _fg->var(i).states() );
-            foreach( const Neighbor &J, _fg->nbV(i) )
+            bforeach( const Neighbor &J, _fg->nbV(i) )
                 if( J.node != I.node )
                     prod *= _bp_dual.msgM( i, J.iter );
             _adj_m[i][I.iter] = prod;
@@ -366,22 +360,22 @@ void BBP::RegenerateSeqMessageAdjoints() {
         }
     }
     for( size_t i = 0; i < _fg->nrVars(); i++ ) {
-        foreach( const Neighbor &I, _fg->nbV(i) ) {
+        bforeach( const Neighbor &I, _fg->nbV(i) ) {
             // calculate adj_n
             Prob prod( _fg->factor(I).p() );
             prod *= _adj_b_F_unnorm[I];
-            foreach( const Neighbor &j, _fg->nbF(I) )
+            bforeach( const Neighbor &j, _fg->nbF(I) )
                 if( i != j ) {
                     Prob n_jI( _bp_dual.msgN( j, j.dual) );
                     const _ind_t& ind = _index( j, j.dual );
                     // multiply prod with n_jI
                     for( size_t x_I = 0; x_I < prod.size(); x_I++ )
-                        prod[x_I] *= n_jI[ind[x_I]];
+                        prod.set( x_I, prod[x_I] * n_jI[ind[x_I]] );
                 }
             Prob marg( _fg->var(i).states(), 0.0 );
             const _ind_t &ind = _index( i, I.iter );
             for( size_t r = 0; r < prod.size(); r++ )
-                marg[ind[r]] += prod[r];
+                marg.set( ind[r], marg[ind[r]] + prod[r] );
             sendSeqMsgN( i, I.iter,marg );
         }
     }
@@ -409,12 +403,12 @@ void BBP::calcNewN( size_t i, size_t _I ) {
     Prob &new_adj_n_iI = _new_adj_n[i][_I];
     new_adj_n_iI = Prob( _fg->var(i).states(), 0.0 );
     size_t I = _fg->nbV(i)[_I];
-    foreach( const Neighbor &j, _fg->nbF(I) )
+    bforeach( const Neighbor &j, _fg->nbF(I) )
         if( j != i ) {
             const Prob &p = _Smsg[i][_I][j.iter];
             const Prob &_adj_m_unnorm_jI = _adj_m_unnorm[j][j.dual];
             LOOP_ij(
-                new_adj_n_iI[xi] += p[xij] * _adj_m_unnorm_jI[xj];
+                new_adj_n_iI.set( xi, new_adj_n_iI[xi] + p[xij] * _adj_m_unnorm_jI[xj] );
             );
             /* THE FOLLOWING WOULD BE ABOUT TWICE AS SLOW:
             Var vi = _fg->var(i);
@@ -431,14 +425,14 @@ void BBP::calcNewM( size_t i, size_t _I ) {
     const Prob &adj = _adj_m_unnorm[i][_I];
     const _ind_t &ind = _index(i,_I);
     for( size_t x_I = 0; x_I < p.size(); x_I++ )
-        p[x_I] *= adj[ind[x_I]];
+        p.set( x_I, p[x_I] * adj[ind[x_I]] );
     _adj_psi_F[I] += p;
     /* THE FOLLOWING WOULD BE SLIGHTLY SLOWER:
     _adj_psi_F[I] += (Factor( _fg->factor(I).vars(), U(I, I.dual) ) * Factor( _fg->var(i), _adj_m_unnorm[i][_I] )).p();
     */
 
     _new_adj_m[i][_I] = Prob( _fg->var(i).states(), 0.0 );
-    foreach( const Neighbor &J, _fg->nbV(i) )
+    bforeach( const Neighbor &J, _fg->nbV(i) )
         if( J != I )
             _new_adj_m[i][_I] += _Rmsg[I][I.dual][J.iter] * _adj_n_unnorm[i][J.iter];
 }
@@ -468,12 +462,12 @@ void BBP::upMsgM( size_t i, size_t _I ) {
 
 void BBP::doParUpdate() {
     for( size_t i = 0; i < _fg->nrVars(); i++ )
-        foreach( const Neighbor &I, _fg->nbV(i) ) {
+        bforeach( const Neighbor &I, _fg->nbV(i) ) {
             calcNewM( i, I.iter );
             calcNewN( i, I.iter );
         }
     for( size_t i = 0; i < _fg->nrVars(); i++ )
-        foreach( const Neighbor &I, _fg->nbV(i) ) {
+        bforeach( const Neighbor &I, _fg->nbV(i) ) {
             upMsgM( i, I.iter );
             upMsgN( i, I.iter );
         }
@@ -540,7 +534,7 @@ void BBP::sendSeqMsgN( size_t i, size_t _I, const Prob &f ) {
         DAI_PV(_fg->factor(I).p());
     }
 #endif
-    foreach( const Neighbor &J, _fg->nbV(i) ) {
+    bforeach( const Neighbor &J, _fg->nbV(i) ) {
         if( J.node != I.node ) {
 #if 0
             if(f_unnorm.sumAbs() > pv_thresh) {
@@ -571,7 +565,7 @@ void BBP::sendSeqMsgM( size_t j, size_t _I ) {
     Prob um( U(I, _j) );
     const _ind_t &ind = _index(j, _I);
     for( size_t x_I = 0; x_I < um.size(); x_I++ )
-        um[x_I] *= _adj_m_unnorm_jI[ind[x_I]];
+        um.set( x_I, um[x_I] * _adj_m_unnorm_jI[ind[x_I]] );
     um *= 1 - props.damping;
     _adj_psi_F[I] += um;
 
@@ -584,12 +578,12 @@ void BBP::sendSeqMsgM( size_t j, size_t _I ) {
 //     DAI_PV(I);
 //     DAI_PV(_I);
 //     DAI_PV(_fg->nbF(I).size());
-    foreach( const Neighbor &i, _fg->nbF(I) ) {
+    bforeach( const Neighbor &i, _fg->nbF(I) ) {
         if( i.node != j ) {
             const Prob &S = _Smsg[i][i.dual][_j];
             Prob msg( _fg->var(i).states(), 0.0 );
             LOOP_ij(
-                msg[xi] += S[xij] * _adj_m_unnorm_jI[xj];
+                msg.set( xi, msg[xi] + S[xij] * _adj_m_unnorm_jI[xj] );
             );
             msg *= 1.0 - props.damping;
             /* THE FOLLOWING WOULD BE ABOUT TWICE AS SLOW:
@@ -629,7 +623,7 @@ Prob BBP::unnormAdjoint( const Prob &w, Real Z_w, const Prob &adj_w ) {
     for( size_t i = 0; i < w.size(); i++ )
         s += w[i] * adj_w[i];
     for( size_t i = 0; i < w.size(); i++ )
-        adj_w_unnorm[i] = (adj_w[i] - s) / Z_w;
+        adj_w_unnorm.set( i, (adj_w[i] - s) / Z_w );
     return adj_w_unnorm;
 //  THIS WOULD BE ABOUT 50% SLOWER:  return (adj_w - (w * adj_w).sum()) / Z_w;
 }
@@ -639,7 +633,7 @@ Real BBP::getUnMsgMag() {
     Real s = 0.0;
     size_t e = 0;
     for( size_t i = 0; i < _fg->nrVars(); i++ )
-        foreach( const Neighbor &I, _fg->nbV(i) ) {
+        bforeach( const Neighbor &I, _fg->nbV(i) ) {
             s += _adj_m_unnorm[i][I.iter].sumAbs();
             s += _adj_n_unnorm[i][I.iter].sumAbs();
             e++;
@@ -653,7 +647,7 @@ void BBP::getMsgMags( Real &s, Real &new_s ) {
     new_s = 0.0;
     size_t e = 0;
     for( size_t i = 0; i < _fg->nrVars(); i++ )
-        foreach( const Neighbor &I, _fg->nbV(i) ) {
+        bforeach( const Neighbor &I, _fg->nbV(i) ) {
             s += _adj_m[i][I.iter].sumAbs();
             s += _adj_n[i][I.iter].sumAbs();
             new_s += _new_adj_m[i][I.iter].sumAbs();
@@ -685,7 +679,7 @@ void BBP::getMsgMags( Real &s, Real &new_s ) {
 void BBP::getArgmaxMsgM( size_t &out_i, size_t &out__I, Real &mag ) {
     bool found = false;
     for( size_t i = 0; i < _fg->nrVars(); i++ )
-        foreach( const Neighbor &I, _fg->nbV(i) ) {
+        bforeach( const Neighbor &I, _fg->nbV(i) ) {
             Real thisMag = _adj_m[i][I.iter].sumAbs();
             if( !found || mag < thisMag ) {
                 found = true;
@@ -709,7 +703,7 @@ Real BBP::getMaxMsgM() {
 Real BBP::getTotalMsgM() {
     Real mag = 0.0;
     for( size_t i = 0; i < _fg->nrVars(); i++ )
-        foreach( const Neighbor &I, _fg->nbV(i) )
+        bforeach( const Neighbor &I, _fg->nbV(i) )
             mag += _adj_m[i][I.iter].sumAbs();
     return mag;
 }
@@ -718,7 +712,7 @@ Real BBP::getTotalMsgM() {
 Real BBP::getTotalNewMsgM() {
     Real mag = 0.0;
     for( size_t i = 0; i < _fg->nrVars(); i++ )
-        foreach( const Neighbor &I, _fg->nbV(i) )
+        bforeach( const Neighbor &I, _fg->nbV(i) )
             mag += _new_adj_m[i][I.iter].sumAbs();
     return mag;
 }
@@ -727,7 +721,7 @@ Real BBP::getTotalNewMsgM() {
 Real BBP::getTotalMsgN() {
     Real mag = 0.0;
     for( size_t i = 0; i < _fg->nrVars(); i++ )
-        foreach( const Neighbor &I, _fg->nbV(i) )
+        bforeach( const Neighbor &I, _fg->nbV(i) )
             mag += _adj_n[i][I.iter].sumAbs();
     return mag;
 }
@@ -737,7 +731,7 @@ std::vector<Prob> BBP::getZeroAdjF( const FactorGraph &fg ) {
     vector<Prob> adj_2;
     adj_2.reserve( fg.nrFactors() );
     for( size_t I = 0; I < fg.nrFactors(); I++ )
-        adj_2.push_back( Prob( fg.factor(I).states(), 0.0 ) );
+        adj_2.push_back( Prob( fg.factor(I).nrStates(), 0.0 ) );
     return adj_2;
 }
 
@@ -769,22 +763,22 @@ void BBP::initCostFnAdj( const BBPCostFunction &cfn, const vector<size_t> *state
                 int c = fg.nbV(i).size();
                 Prob p(dim,0.0);
                 for( size_t xi = 0; xi < dim; xi++ )
-                    p[xi] = (1 - c) * (1 + log( _ia->beliefV(i)[xi] ));
+                    p.set( xi, (1 - c) * (1 + log( _ia->beliefV(i)[xi] )) );
                 b1_adj.push_back( p );
 
                 for( size_t xi = 0; xi < dim; xi++ )
-                    p[xi] = -_ia->beliefV(i)[xi];
+                    p.set( xi, -_ia->beliefV(i)[xi] );
                 psi1_adj.push_back( p );
             }
             for( size_t I = 0; I < fg.nrFactors(); I++ ) {
-                size_t dim = fg.factor(I).states();
+                size_t dim = fg.factor(I).nrStates();
                 Prob p( dim, 0.0 );
                 for( size_t xI = 0; xI < dim; xI++ )
-                    p[xI] = 1 + log( _ia->beliefF(I)[xI] / fg.factor(I).p()[xI] );
+                    p.set( xI, 1 + log( _ia->beliefF(I)[xI] / fg.factor(I).p()[xI] ) );
                 b2_adj.push_back( p );
 
                 for( size_t xI = 0; xI < dim; xI++ )
-                    p[xI] = -_ia->beliefF(I)[xI] / fg.factor(I).p()[xI];
+                    p.set( xI, -_ia->beliefF(I)[xI] / fg.factor(I).p()[xI] );
                 psi2_adj.push_back( p );
             }
             init( b1_adj, b2_adj, psi1_adj, psi2_adj );
@@ -793,14 +787,14 @@ void BBP::initCostFnAdj( const BBPCostFunction &cfn, const vector<size_t> *state
             vector<Prob> b2_adj;
             b2_adj.reserve( fg.nrFactors() );
             for( size_t I = 0; I < fg.nrFactors(); I++ ) {
-                size_t dim = fg.factor(I).states();
+                size_t dim = fg.factor(I).nrStates();
                 Prob p( dim, 0.0 );
                 for( size_t xI = 0; xI < dim; xI++ ) {
                     Real bIxI = _ia->beliefF(I)[xI];
                     if( bIxI < 1.0e-15 )
-                        p[xI] = -1.0e10;
+                        p.set( xI, -1.0e10 );
                     else
-                        p[xI] = 1 + log( bIxI );
+                        p.set( xI, 1 + log( bIxI ) );
                 }
                 b2_adj.push_back(p);
             }
@@ -815,9 +809,9 @@ void BBP::initCostFnAdj( const BBPCostFunction &cfn, const vector<size_t> *state
                 for( size_t xi = 0; xi < fg.var(i).states(); xi++ ) {
                     Real bixi = _ia->beliefV(i)[xi];
                     if( bixi < 1.0e-15 )
-                        p[xi] = -1.0e10;
+                        p.set( xi, -1.0e10 );
                     else
-                        p[xi] = 1 + log( bixi );
+                        p.set( xi, 1 + log( bixi ) );
                 }
                 b1_adj.push_back( p );
             }
@@ -843,13 +837,13 @@ void BBP::initCostFnAdj( const BBPCostFunction &cfn, const vector<size_t> *state
                 Real b = _ia->beliefV(i)[state[i]];
                 switch( (size_t)cfn ) {
                     case BBPCostFunction::CFN_GIBBS_B:
-                        delta[state[i]] = 1.0;
+                        delta.set( state[i], 1.0 );
                         break;
                     case BBPCostFunction::CFN_GIBBS_B2:
-                        delta[state[i]] = b;
+                        delta.set( state[i], b );
                         break;
                     case BBPCostFunction::CFN_GIBBS_EXP:
-                        delta[state[i]] = exp(b);
+                        delta.set( state[i], exp(b) );
                         break;
                     default:
                         DAI_THROW(UNKNOWN_ENUM_VALUE);
@@ -872,7 +866,7 @@ void BBP::initCostFnAdj( const BBPCostFunction &cfn, const vector<size_t> *state
             vector<Prob> b2_adj;
             b2_adj.reserve( fg.nrVars() );
             for( size_t I = 0; I <  fg.nrFactors(); I++ ) {
-                size_t n = fg.factor(I).states();
+                size_t n = fg.factor(I).nrStates();
                 Prob delta( n, 0.0 );
 
                 size_t x_I = getFactorEntryForState( fg, I, state );
@@ -881,13 +875,13 @@ void BBP::initCostFnAdj( const BBPCostFunction &cfn, const vector<size_t> *state
                 Real b = _ia->beliefF(I)[x_I];
                 switch( (size_t)cfn ) {
                     case BBPCostFunction::CFN_GIBBS_B_FACTOR:
-                        delta[x_I] = 1.0;
+                        delta.set( x_I, 1.0 );
                         break;
                     case BBPCostFunction::CFN_GIBBS_B2_FACTOR:
-                        delta[x_I] = b;
+                        delta.set( x_I, b );
                         break;
                     case BBPCostFunction::CFN_GIBBS_EXP_FACTOR:
-                        delta[x_I] = exp( b );
+                        delta.set( x_I, exp( b ) );
                         break;
                     default:
                         DAI_THROW(UNKNOWN_ENUM_VALUE);
@@ -931,10 +925,10 @@ void BBP::run() {
                     break;
 
                 for( size_t i = 0; i < _fg->nrVars(); i++ )
-                    foreach( const Neighbor &I, _fg->nbV(i) )
+                    bforeach( const Neighbor &I, _fg->nbV(i) )
                         sendSeqMsgM( i, I.iter );
 /*                for( size_t i = 0; i < _fg->nrVars(); i++ )
-                    foreach( const Neighbor &I, _fg->nbV(i) )
+                    bforeach( const Neighbor &I, _fg->nbV(i) )
                         updateSeqMsgM( i, I.iter );*/
             } while( mag > tol && _iters < props.maxiter );
 
@@ -1011,10 +1005,11 @@ Real numericBBPTest( const InfAlg &bp, const std::vector<size_t> *state, const P
                 // perturb it
                 size_t n = bp_prb->fg().var(i).states();
                 Prob psi_1_prb( n, 1.0 );
-                psi_1_prb[xi] += h;
+                psi_1_prb.set( xi, psi_1_prb[xi] + h );
 //                 psi_1_prb.normalize();
                 size_t I = bp_prb->fg().nbV(i)[0]; // use first factor in list of neighbors of i
-                bp_prb->fg().factor(I) *= Factor( bp_prb->fg().var(i), psi_1_prb );
+                Factor tmp = bp_prb->fg().factor(I) * Factor( bp_prb->fg().var(i), psi_1_prb );
+                bp_prb->fg().setFactor( I, tmp );
 
                 // call 'init' on the perturbed variables
                 bp_prb->init( bp_prb->fg().var(i) );
@@ -1036,7 +1031,7 @@ Real numericBBPTest( const InfAlg &bp, const std::vector<size_t> *state, const P
             cout << "i: " << i
                  << ", p_adj_est: " << p_adj_est
                  << ", bbp.adj_psi_V(i): " << bbp.adj_psi_V(i) << endl;
-            d += dist( p_adj_est, bbp.adj_psi_V(i), Prob::DISTL1 );
+            d += dist( p_adj_est, bbp.adj_psi_V(i), DISTL1 );
         }
     }
     /*    if(1) {
@@ -1052,7 +1047,7 @@ Real numericBBPTest( const InfAlg &bp, const std::vector<size_t> *state, const P
         // for each variable i
         for(size_t i=0; i<bp_dual.nrVars(); i++) {
             // for each factor I ~ i
-            foreach(size_t I, bp_dual.nbV(i)) {
+            bforeach(size_t I, bp_dual.nbV(i)) {
                 vector<Real> adj_n_est;
                 // for each value xi
                 for(size_t xi=0; xi<bp_dual.var(i).states(); xi++) {
@@ -1086,14 +1081,14 @@ Real numericBBPTest( const InfAlg &bp, const std::vector<size_t> *state, const P
                 cerr << "i: " << i << ", I: " << I
                      << ", adj_n_est: " << p_adj_n_est
                      << ", bbp.adj_n(i,I): " << bbp.adj_n(i,I) << endl;
-                d += dist(p_adj_n_est, bbp.adj_n(i,I), Prob::DISTL1);
+                d += dist(p_adj_n_est, bbp.adj_n(i,I), DISTL1);
 
                 Prob p_adj_m_est( adj_m_est );
                 // compare this numerical estimate to the BBP estimate; sum the distances
                 cerr << "i: " << i << ", I: " << I
                      << ", adj_m_est: " << p_adj_m_est
                      << ", bbp.adj_m(I,i): " << bbp.adj_m(I,i) << endl;
-                d += dist(p_adj_m_est, bbp.adj_m(I,i), Prob::DISTL1);
+                d += dist(p_adj_m_est, bbp.adj_m(I,i), DISTL1);
             }
         }
     }
@@ -1120,7 +1115,7 @@ Real numericBBPTest( const InfAlg &bp, const std::vector<size_t> *state, const P
             cerr << "i: " << i
                  << ", adj_b_V_est: " << p_adj_b_V_est
                  << ", bbp.adj_b_V(i): " << bbp.adj_b_V(i) << endl;
-            d += dist(p_adj_b_V_est, bbp.adj_b_V(i), Prob::DISTL1);
+            d += dist(p_adj_b_V_est, bbp.adj_b_V(i), DISTL1);
         }
     }
     */
@@ -1152,8 +1147,6 @@ void BBP::Properties::set(const PropertySet &opts)
     }
     if( !errormsg.empty() )
         DAI_THROWE(UNKNOWN_PROPERTY, errormsg);
-    if( !opts.hasKey("verbose") )
-        errormsg = errormsg + "BBP: Missing property \"verbose\" for method \"BBP\"\n";
     if( !opts.hasKey("maxiter") )
         errormsg = errormsg + "BBP: Missing property \"maxiter\" for method \"BBP\"\n";
     if( !opts.hasKey("tol") )
@@ -1164,7 +1157,11 @@ void BBP::Properties::set(const PropertySet &opts)
         errormsg = errormsg + "BBP: Missing property \"updates\" for method \"BBP\"\n";
     if( !errormsg.empty() )
         DAI_THROWE(NOT_ALL_PROPERTIES_SPECIFIED,errormsg);
-    verbose = opts.getStringAs<size_t>("verbose");
+    if( opts.hasKey("verbose") ) {
+        verbose = opts.getStringAs<size_t>("verbose");
+    } else {
+        verbose = 0;
+    }
     maxiter = opts.getStringAs<size_t>("maxiter");
     tol = opts.getStringAs<Real>("tol");
     damping = opts.getStringAs<Real>("damping");
@@ -1172,11 +1169,11 @@ void BBP::Properties::set(const PropertySet &opts)
 }
 PropertySet BBP::Properties::get() const {
     PropertySet opts;
-    opts.Set("verbose", verbose);
-    opts.Set("maxiter", maxiter);
-    opts.Set("tol", tol);
-    opts.Set("damping", damping);
-    opts.Set("updates", updates);
+    opts.set("verbose", verbose);
+    opts.set("maxiter", maxiter);
+    opts.set("tol", tol);
+    opts.set("damping", damping);
+    opts.set("updates", updates);
     return opts;
 }
 string BBP::Properties::toString() const {

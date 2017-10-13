@@ -1,11 +1,8 @@
 /*  This file is part of libDAI - http://www.libdai.org/
  *
- *  libDAI is licensed under the terms of the GNU General Public License version
- *  2, or (at your option) any later version. libDAI is distributed without any
- *  warranty. See the file COPYING for more details.
+ *  Copyright (c) 2006-2011, The libDAI authors. All rights reserved.
  *
- *  Copyright (C) 2006-2009  Joris Mooij  [joris dot mooij at libdai dot org]
- *  Copyright (C) 2006-2007  Radboud University Nijmegen, The Netherlands
+ *  Use of this source code is governed by a BSD-style license that can be found in the LICENSE file.
  */
 
 
@@ -91,15 +88,13 @@ class LC : public DAIAlgFG {
             PropertySet cavaiopts;
         } props;
 
-        /// Name of this inference algorithm
-        static const char *Name;
-
     public:
         /// Default constructor
         LC() : DAIAlgFG(), _pancakes(), _cavitydists(), _phis(), _beliefs(), _maxdiff(), _iters(), props() {}
 
         /// Construct from FactorGraph \a fg and PropertySet \a opts
-        /** \param opts Parameters @see Properties
+        /** \param fg Factor graph.
+         *  \param opts Parameters @see Properties
          */
         LC( const FactorGraph &fg, const PropertySet &opts );
 
@@ -107,9 +102,10 @@ class LC : public DAIAlgFG {
     /// \name General InfAlg interface
     //@{
         virtual LC* clone() const { return new LC(*this); }
-        virtual std::string identify() const;
-        virtual Factor belief( const Var &n ) const { return( _beliefs[findVar(n)] ); }
-        virtual Factor belief( const VarSet &/*ns*/ ) const { DAI_THROW(NOT_IMPLEMENTED); return Factor(); }
+        virtual LC* construct( const FactorGraph &fg, const PropertySet &opts ) const { return new LC( fg, opts ); }
+        virtual std::string name() const { return "LC"; }
+        virtual Factor belief( const Var &v ) const { return beliefV( findVar( v ) ); }
+        virtual Factor belief( const VarSet &/*vs*/ ) const;
         virtual Factor beliefV( size_t i ) const { return _beliefs[i]; }
         virtual std::vector<Factor> beliefs() const { return _beliefs; }
         virtual Real logZ() const { DAI_THROW(NOT_IMPLEMENTED); return 0.0; }
@@ -118,6 +114,7 @@ class LC : public DAIAlgFG {
         virtual Real run();
         virtual Real maxDiff() const { return _maxdiff; }
         virtual size_t Iterations() const { return _iters; }
+        virtual void setMaxIter( size_t maxiter ) { props.maxiter = maxiter; }
         virtual void setProperties( const PropertySet &opts );
         virtual PropertySet getProperties() const;
         virtual std::string printProperties() const;

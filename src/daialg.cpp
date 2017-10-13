@@ -1,15 +1,13 @@
 /*  This file is part of libDAI - http://www.libdai.org/
  *
- *  libDAI is licensed under the terms of the GNU General Public License version
- *  2, or (at your option) any later version. libDAI is distributed without any
- *  warranty. See the file COPYING for more details.
+ *  Copyright (c) 2006-2011, The libDAI authors. All rights reserved.
  *
- *  Copyright (C) 2006-2009  Joris Mooij  [joris dot mooij at libdai dot org]
- *  Copyright (C) 2006-2007  Radboud University Nijmegen, The Netherlands
+ *  Use of this source code is governed by a BSD-style license that can be found in the LICENSE file.
  */
 
 
 #include <vector>
+#include <stack>
 #include <dai/daialg.h>
 
 
@@ -50,7 +48,7 @@ Factor calcMarginal( const InfAlg &obj, const VarSet &vs, bool reInit ) {
             clamped->run();
             logZ = clamped->logZ();
         } catch( Exception &e ) {
-            if( e.code() == Exception::NOT_NORMALIZABLE )
+            if( e.getCode() == Exception::NOT_NORMALIZABLE )
                 logZ = -INFINITY;
             else
                 throw;
@@ -61,9 +59,9 @@ Factor calcMarginal( const InfAlg &obj, const VarSet &vs, bool reInit ) {
                 logZ0 = logZ;
 
         if( logZ == -INFINITY )
-            Pvs[s] = 0;
+            Pvs.set( s, 0 );
         else
-            Pvs[s] = exp(logZ - logZ0); // subtract logZ0 to avoid very large numbers
+            Pvs.set( s, exp(logZ - logZ0) ); // subtract logZ0 to avoid very large numbers
 
         // restore clamped factors
         clamped->restoreFactors( vs );
@@ -114,7 +112,7 @@ vector<Factor> calcPairBeliefs( const InfAlg & obj, const VarSet& vs, bool reIni
                             clamped->run();
                             logZ = clamped->logZ();
                         } catch( Exception &e ) {
-                            if( e.code() == Exception::NOT_NORMALIZABLE )
+                            if( e.getCode() == Exception::NOT_NORMALIZABLE )
                                 logZ = -INFINITY;
                             else
                                 throw;
@@ -132,7 +130,7 @@ vector<Factor> calcPairBeliefs( const InfAlg & obj, const VarSet& vs, bool reIni
 
                         // we assume that j.label() < k.label()
                         // i.e. we make an assumption here about the indexing
-                        pairbelief[j_val + (k_val * nj->states())] = Z_xj;
+                        pairbelief.set( j_val + (k_val * nj->states()), Z_xj );
 
                         // restore clamped factors
                         clamped->restoreFactors( vs );
@@ -169,7 +167,7 @@ vector<Factor> calcPairBeliefs( const InfAlg & obj, const VarSet& vs, bool reIni
                     clamped->run();
                     logZ = clamped->logZ();
                 } catch( Exception &e ) {
-                    if( e.code() == Exception::NOT_NORMALIZABLE )
+                    if( e.getCode() == Exception::NOT_NORMALIZABLE )
                         logZ = -INFINITY;
                     else
                         throw;
@@ -190,9 +188,9 @@ vector<Factor> calcPairBeliefs( const InfAlg & obj, const VarSet& vs, bool reIni
                         Factor b_k = clamped->belief(vvs[k]);
                         for( size_t k_val = 0; k_val < vvs[k].states(); k_val++ )
                             if( vvs[j].label() < vvs[k].label() )
-                                pairbeliefs[j * N + k][j_val + (k_val * vvs[j].states())] = Z_xj * b_k[k_val];
+                                pairbeliefs[j * N + k].set( j_val + (k_val * vvs[j].states()), Z_xj * b_k[k_val] );
                             else
-                                pairbeliefs[j * N + k][k_val + (j_val * vvs[k].states())] = Z_xj * b_k[k_val];
+                                pairbeliefs[j * N + k].set( k_val + (j_val * vvs[k].states()), Z_xj * b_k[k_val] );
                     }
 
                 // restore clamped factors
@@ -210,19 +208,78 @@ vector<Factor> calcPairBeliefs( const InfAlg & obj, const VarSet& vs, bool reIni
 }
 
 
-std::vector<Factor> calcPairBeliefsNew( const InfAlg& obj, const VarSet& vs, bool reInit ) { 
-    return calcPairBeliefs( obj, vs, reInit, true );
-}
+std::vector<size_t> findMaximum( const InfAlg& obj ) {
+    vector<size_t> maximum( obj.fg().nrVars() );
+    vector<bool> visitedVars( obj.fg().nrVars(), false );
+    vector<bool> visitedFactors( obj.fg().nrFactors(), false );
+    stack<size_t> scheduledFactors;
+    size_t nrVisitedFactors = 0;
+    size_t firstUnvisitedFactor = 0;
+    while( nrVisitedFactors < obj.fg().nrFactors() ) {
+        if( scheduledFactors.size() == 0 ) {
+            while( visitedFactors[firstUnvisitedFactor] ) {
+                firstUnvisitedFactor++;
+                if( firstUnvisitedFactor >= obj.fg().nrFactors() )
+                    DAI_THROWE(RUNTIME_ERROR,"Internal error in findMaximum()");
+            }
+            scheduledFactors.push( firstUnvisitedFactor );
+        }
+            
+        size_t I = scheduledFactors.top();
+        scheduledFactors.pop();
+        if( visitedFactors[I] )
+            continue;
+        visitedFactors[I] = true;
+        nrVisitedFactors++;
 
+        // Get marginal of factor I
+        Prob probF = obj.beliefF(I).p();
 
-Factor calcMarginal2ndO( const InfAlg & obj, const VarSet& vs, bool reInit ) {
-    vector<Factor> pairbeliefs = calcPairBeliefs( obj, vs, reInit );
+        // The allowed configuration is restrained according to the variables assigned so far:
+        // pick the argmax amongst the allowed states
+        Real maxProb = -numeric_limits<Real>::max();
+        State maxState( obj.fg().factor(I).vars() );
+        size_t maxcount = 0;
+        for( State s( obj.fg().factor(I).vars() ); s.valid(); ++s ) {
+            // First, calculate whether this state is consistent with variables that
+            // have been assigned already
+            bool allowedState = true;
+            bforeach( const Neighbor &j, obj.fg().nbF(I) )
+                if( visitedVars[j.node] && maximum[j.node] != s(obj.fg().var(j.node)) ) {
+                    allowedState = false;
+                    break;
+                }
+            // If it is consistent, check if its probability is larger than what we have seen so far
+            if( allowedState ) {
+                if( probF[s] > maxProb ) {
+                    maxState = s;
+                    maxProb = probF[s];
+                    maxcount = 1;
+                } else
+                    maxcount++;
+            }
+        }
+        if( maxProb == 0.0 )
+            DAI_THROWE(RUNTIME_ERROR,"Failed to decode the MAP state (should try harder using a SAT solver, but that's not implemented yet)");
+        DAI_ASSERT( obj.fg().factor(I).p()[maxState] != 0.0 );
 
-    Factor Pvs (vs);
-    for( size_t ij = 0; ij < pairbeliefs.size(); ij++ )
-        Pvs *= pairbeliefs[ij];
-
-    return( Pvs.normalized() );
+        // Decode the argmax
+        bforeach( const Neighbor &j, obj.fg().nbF(I) ) {
+            if( visitedVars[j.node] ) {
+                // We have already visited j earlier - hopefully our state is consistent
+                if( maximum[j.node] != maxState( obj.fg().var(j.node) ) )
+                    DAI_THROWE(RUNTIME_ERROR,"Detected inconsistency while decoding MAP state (should try harder using a SAT solver, but that's not implemented yet)");
+            } else {
+                // We found a consistent state for variable j
+                visitedVars[j.node] = true;
+                maximum[j.node] = maxState( obj.fg().var(j.node) );
+                bforeach( const Neighbor &J, obj.fg().nbV(j) )
+                    if( !visitedFactors[J] )
+                        scheduledFactors.push(J);
+            }
+        }
+    }
+    return maximum;
 }
 
 

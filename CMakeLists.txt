@@ -1,5 +1,6 @@
 cmake_minimum_required (VERSION 2.8)
 project(LIBDAI)
+set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 
 
 # default build-type (release)
@@ -11,8 +12,8 @@ ENDIF()
 
 
 set(${PROJECT_NAME}_VERSION_MAJOR 0)
-set(${PROJECT_NAME}_VERSION_MINOR 3)
-set(${PROJECT_NAME}_VERSION_PATCH 3)
+set(${PROJECT_NAME}_VERSION_MINOR 4)
+set(${PROJECT_NAME}_VERSION_PATCH 0)
 
 
 set(${PROJECT_NAME}_VERSION 
@@ -25,6 +26,12 @@ set(${PROJECT_NAME}_VERSION
 #---------------------------------------------------
 find_package(Boost REQUIRED)
 include_directories(${Boost_INCLUDE_DIRS})
+
+#---------------------------------------------------
+# GMP
+#---------------------------------------------------
+find_package(GMP REQUIRED)
+include_directories(${GMP_INCLUDE_DIR})
 
 
 

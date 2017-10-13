@@ -1,15 +1,14 @@
 /*  This file is part of libDAI - http://www.libdai.org/
  *
- *  libDAI is licensed under the terms of the GNU General Public License version
- *  2, or (at your option) any later version. libDAI is distributed without any
- *  warranty. See the file COPYING for more details.
+ *  Copyright (c) 2006-2011, The libDAI authors. All rights reserved.
  *
- *  Copyright (C) 2009  Frederik Eaton [frederik at ofb dot net]
+ *  Use of this source code is governed by a BSD-style license that can be found in the LICENSE file.
  */
 
 
 /// \file
-/// \brief  Defines class BBP, which implements Back-Belief-Propagation
+/// \brief Defines class BBP, which implements Back-Belief-Propagation
+/// \todo Clean up code
 
 
 #ifndef ___defined_libdai_bbp_h
@@ -52,9 +51,7 @@ class BBPCostFunction : public BBPCostFunctionBase {
 
         /// Assignment operator
         BBPCostFunction& operator=( const BBPCostFunctionBase &x ) {
-            if( this != &x ) {
-                (BBPCostFunctionBase)*this = x;
-            }
+            BBPCostFunctionBase::operator=( x );
             return *this;
         }
 };
@@ -348,7 +345,7 @@ class BBP {
            DAI_ENUM(UpdateType,SEQ_FIX,SEQ_MAX,SEQ_BP_REV,SEQ_BP_FWD,PAR);
 
            /// Verbosity (amount of output sent to stderr)
-           size_t verbose;
+           size_t verbose = 0;
 
            /// Maximum number of iterations
            size_t maxiter;

@@ -1,10 +1,8 @@
 % This file is part of libDAI - http://www.libdai.org/
 %
-% libDAI is licensed under the terms of the GNU General Public License version
-% 2, or (at your option) any later version. libDAI is distributed without any
-% warranty. See the file COPYING for more details.
+% Copyright (c) 2006-2011, The libDAI authors. All rights reserved.
 %
-% Copyright (C) 2009  Joris Mooij  [joris dot mooij at libdai dot org]
+% Use of this source code is governed by a BSD-style license that can be found in the LICENSE file.
 
 
 % This example program illustrates how to construct a factorgraph
@@ -61,9 +59,7 @@ SprinklerNetwork = dai.FactorGraph(SprinklerFactors);
 
 % Write factorgraph to a file
 SprinklerNetwork.WriteToFile('sprinkler.fg');
-
-% Reread the factorgraph from the file
-SprinklerNetwork.ReadFromFile('sprinkler.fg');
+fprintf('Sprinkler network written to sprinkler.fg\n');
 
 % Output some information about the factorgraph
 fprintf('%d variables\n', SprinklerNetwork.nrVars());

@@ -1,15 +1,13 @@
 /*  This file is part of libDAI - http://www.libdai.org/
  *
- *  libDAI is licensed under the terms of the GNU General Public License version
- *  2, or (at your option) any later version. libDAI is distributed without any
- *  warranty. See the file COPYING for more details.
+ *  Copyright (c) 2006-2011, The libDAI authors. All rights reserved.
  *
- *  Copyright (C) 2009  Frederik Eaton [frederik at ofb dot net]
+ *  Use of this source code is governed by a BSD-style license that can be found in the LICENSE file.
  */
 
 
 /// \file
-/// \brief Defines class CBP, which implements Clamped Belief Propagation
+/// \brief Defines class CBP, which implements Conditioned Belief Propagation
 
 
 #ifndef __defined_libdai_cbp_h
@@ -26,7 +24,7 @@
 namespace dai {
 
 
-/// Class for CBP (Clamped Belief Propagation) [\ref EaG09]
+/// Class for CBP (Conditioned Belief Propagation) [\ref EaG09]
 /** This approximate inference algorithm uses configurable heuristics to choose a variable
  *  \f$ x_i \f$ and a state \f$ x_i^* \f$. Inference is done with \f$ x_i \f$ "clamped" to \f$ x_i^* \f$
  *  (i.e., conditional on \f$ x_i = x_i^* \f$), and also with the negation of this condition. 
@@ -60,23 +58,25 @@ class CBP : public DAIAlgFG {
 
 
     public:
+        /// Default constructor
+        CBP() : DAIAlgFG(), _beliefsV(), _beliefsF(), _logZ(0.0), _iters(0), _maxdiff(0.0), _sum_level(0.0), _num_leaves(0), _clamp_ofstream() {}
+
         /// Construct CBP object from FactorGraph \a fg and PropertySet \a opts
-        /** \param opts Parameters @see Properties
+        /** \param fg Factor graph.
+         *  \param opts Parameters @see Properties
          */
         CBP( const FactorGraph &fg, const PropertySet &opts ) : DAIAlgFG(fg) {
             props.set( opts );
             construct();
         }
 
-        /// Name of this inference algorithm
-        static const char *Name;
-
     /// \name General InfAlg interface
     //@{
         virtual CBP* clone() const { return new CBP(*this); }
-        virtual std::string identify() const { return std::string(Name) + props.toString(); }
-        virtual Factor belief (const Var &n) const { return _beliefsV[findVar(n)]; }
-        virtual Factor belief (const VarSet &) const { DAI_THROW(NOT_IMPLEMENTED); }
+        virtual CBP* construct( const FactorGraph &fg, const PropertySet &opts ) const { return new CBP( fg, opts ); }
+        virtual std::string name() const { return "CBP"; }
+        virtual Factor belief( const Var &v ) const { return beliefV( findVar( v ) ); }
+        virtual Factor belief( const VarSet & ) const { DAI_THROW(NOT_IMPLEMENTED); }
         virtual Factor beliefV( size_t i ) const { return _beliefsV[i]; }
         virtual Factor beliefF( size_t I ) const { return _beliefsF[I]; }
         virtual std::vector<Factor> beliefs() const { return concat(_beliefsV, _beliefsF); }
@@ -86,6 +86,7 @@ class CBP : public DAIAlgFG {
         virtual Real run();
         virtual Real maxDiff() const { return _maxdiff; }
         virtual size_t Iterations() const { return _iters; }
+        virtual void setMaxIter( size_t maxiter ) { props.maxiter = maxiter; }
         virtual void setProperties( const PropertySet &opts ) { props.set( opts ); }
         virtual PropertySet getProperties() const { return props.get(); }
         virtual std::string printProperties() const { return props.toString(); }

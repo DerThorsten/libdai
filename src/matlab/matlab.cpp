@@ -1,11 +1,8 @@
 /*  This file is part of libDAI - http://www.libdai.org/
  *
- *  libDAI is licensed under the terms of the GNU General Public License version
- *  2, or (at your option) any later version. libDAI is distributed without any
- *  warranty. See the file COPYING for more details.
+ *  Copyright (c) 2006-2011, The libDAI authors. All rights reserved.
  *
- *  Copyright (C) 2006-2009  Joris Mooij  [joris dot mooij at libdai dot org]
- *  Copyright (C) 2006-2007  Radboud University Nijmegen, The Netherlands
+ *  Use of this source code is governed by a BSD-style license that can be found in the LICENSE file.
  */
 
 
@@ -41,10 +38,12 @@ mxArray *Factors2mx(const vector<Factor> &Ps) {
             BiMember_data[i] = j->label();
             dims.push_back( j->states() );
         }
+        while( dims.size() <= 2 )
+            dims.push_back( 1 );
 
-        mxArray *BiP = mxCreateNumericArray(I->vars().size(), &(*(dims.begin())), mxDOUBLE_CLASS, mxREAL);
+        mxArray *BiP = mxCreateNumericArray(dims.size(), &(*(dims.begin())), mxDOUBLE_CLASS, mxREAL);
         double *BiP_data = mxGetPr(BiP);
-        for( size_t j = 0; j < I->states(); j++ )
+        for( size_t j = 0; j < I->nrStates(); j++ )
             BiP_data[j] = (*I)[j];
 
         mxSetField(Bi,0,"Member",BiMember);
@@ -119,7 +118,7 @@ vector<Factor> mx2Factors(const mxArray *psi, long verbose) {
         }
         Permute permindex( di, perm );
         for( size_t li = 0; li < prod; li++ )
-            factors.back()[permindex.convertLinearIndex(li)] = factordata[li];
+            factors.back().set( permindex.convertLinearIndex(li), factordata[li] );
     }
 
     if( verbose >= 3 ) {
@@ -166,7 +165,7 @@ Factor mx2Factor(const mxArray *psi) {
     }
     Permute permindex( di, perm );
     for( size_t li = 0; li < prod; li++ )
-        factor[permindex.convertLinearIndex(li)] = factordata[li];
+        factor.set( permindex.convertLinearIndex(li), factordata[li] );
 
     return( factor );
 }

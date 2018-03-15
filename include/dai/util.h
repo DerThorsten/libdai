@@ -30,16 +30,8 @@
 #include <dai/exceptions.h>
 
 
-#if defined(WINDOWS)
-    #include <boost/tr1/unordered_map.hpp> // only present in boost 1.37 and higher
-#elif defined(CYGWIN)
-    #include <boost/tr1/unordered_map.hpp> // only present in boost 1.37 and higher
-#elif defined(MACOSX)
-    #include <boost/tr1/unordered_map.hpp> // only present in boost 1.37 and higher
-#else
-    //#include <tr1/unordered_map> // only present in modern GCC distributions
-    #include <boost/tr1/unordered_map.hpp> // only present in boost 1.37 and higher
-#endif
+
+#include <boost/unordered_map.hpp> // only present in boost 1.37 and higher
 
 
 /// An alias to the BOOST_FOREACH macro from the boost::bforeach library
@@ -122,7 +114,7 @@ inline Real pow( Real x, Real y ) {
 /** We use the (experimental) TR1 unordered_map implementation included in modern GCC distributions or in boost versions 1.37 and higher.
  */
 template <typename T, typename U, typename H = boost::hash<T> >
-    class hash_map : public std::tr1::unordered_map<T,U,H> {};
+    class hash_map : public boost::unordered_map<T,U,H> {};
 
 
 /// Returns wall clock time in seconds

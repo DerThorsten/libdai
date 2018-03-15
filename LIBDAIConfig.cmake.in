@@ -10,11 +10,14 @@
 set(PN LIBDAI)
 
 
+
+# to make findGMP visible
+list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_LIST_DIR})
 find_package(GMP REQUIRED)
 
 
 
-FIND_LIBRARY(${PN}_LIBRARY libdai
+FIND_LIBRARY(THE_${PN}_LIBRARY libdai
     PATHS ${PACKAGE_PREFIX_DIR}/@CMAKE_INSTALL_LIBDIR@
     NO_DEFAULT_PATH
 )
@@ -36,16 +39,17 @@ set( ${PN}_COMPILE_DEFINITIONS
   "-DDAI_WITH_DECMAP"
 )
 
-# to make findGMP visible
-list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_LIST_DIR})
 
 set_and_check(${PN}_INCLUDE_DIR "${PACKAGE_PREFIX_DIR}/@CMAKE_INSTALL_INCLUDEDIR@")
 set_and_check(${PN}_INCLUDE_DIRS 
   "${PACKAGE_PREFIX_DIR}/@CMAKE_INSTALL_INCLUDEDIR@"
   ${GMP_INCLUDE_DIR}
+  ${GMPXX_INCLUDE_DIR}
 )
-set_and_check(${PN}_LIBRARY      ${${PN}_LIBRARY})
+set_and_check(${PN}_LIBRARY  ${THE_${PN}_LIBRARY})
 set_and_check(${PN}_LIBRARIES     
   ${GMP_LIBRARIES}
-  ${${PN}_LIBRARY})
+  ${GMPXX_LIBRARIES}
+  ${THE_${PN}_LIBRARY}
+)
 check_required_components(${PN})

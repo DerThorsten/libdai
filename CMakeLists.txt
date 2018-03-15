@@ -13,7 +13,7 @@ ENDIF()
 
 set(${PROJECT_NAME}_VERSION_MAJOR 0)
 set(${PROJECT_NAME}_VERSION_MINOR 4)
-set(${PROJECT_NAME}_VERSION_PATCH 1)
+set(${PROJECT_NAME}_VERSION_PATCH 5)
 
 
 set(${PROJECT_NAME}_VERSION 
@@ -32,7 +32,7 @@ include_directories(${Boost_INCLUDE_DIRS})
 #---------------------------------------------------
 find_package(GMP REQUIRED)
 include_directories(${GMP_INCLUDE_DIR})
-
+include_directories(${GMPXX_INCLUDE_DIR})
 
 
 SET( LIBDAI_COMPILE_ALL_ALGS_FLAGS
@@ -81,7 +81,7 @@ file(GLOB ${PROJECT_NAME}_HEADERS
 
 include_directories(include)
 ADD_LIBRARY(libdai SHARED ${${PROJECT_NAME}_SRC_FILES})
-
+target_link_libraries(libdai ${GMP_LIBRARIES})
 
 include(GNUInstallDirs)
 include(CMakePackageConfigHelpers)

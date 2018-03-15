@@ -37,7 +37,8 @@
 #elif defined(MACOSX)
     #include <boost/tr1/unordered_map.hpp> // only present in boost 1.37 and higher
 #else
-    #include <tr1/unordered_map> // only present in modern GCC distributions
+    //#include <tr1/unordered_map> // only present in modern GCC distributions
+    #include <boost/tr1/unordered_map.hpp> // only present in boost 1.37 and higher
 #endif
 
 

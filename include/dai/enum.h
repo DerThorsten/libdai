@@ -80,14 +80,16 @@
                 }\
         }\
 \
-        friend std::istream& operator >> (std::istream& is, x& y) {\
+        template<class char_t, class traits> \
+        friend std::basic_istream<char_t, traits>& operator >> (std::basic_istream<char_t, traits>& is, x& y) {\
             std::string s;\
             is >> s;\
             y = x(s.c_str());\
             return is;\
         }\
 \
-        friend std::ostream& operator << (std::ostream& os, const x& y) {\
+        template<class char_t, class traits> \
+        friend std::basic_ostream<char_t, traits> & operator << (std::basic_ostream<char_t, traits> & os, const x& y) {\
             os << (const char *)y;\
             return os;\
         }\
